@@ -54,9 +54,11 @@ st.write(f"### Total Operating Expenses: **${total_expenses:,.2f}**")
 st.write(f"### EBITDA: **${ebitda:,.2f}**")
 st.write(f"### EBITDA Margin: **{ebitda_margin:.2f}%**")
 
-# Preventing Pie Chart NaN issues
+# Preventing Pie Chart NaN issues & Handling Negative EBITDA
 if total_expenses == 0 and ebitda == 0:
     st.write("⚠️ **Enter values above to generate the pie chart.**")
+elif ebitda < 0:
+    st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
     fig, ax = plt.subplots(figsize=(6,6))
@@ -67,3 +69,4 @@ else:
     ax.pie(values, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
     ax.set_title("EBITDA Margin Breakdown")
     st.pyplot(fig)
+
