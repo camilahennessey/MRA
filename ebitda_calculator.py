@@ -16,7 +16,7 @@ st.markdown(
 )
 
 st.markdown('<div class="centered-image">', unsafe_allow_html=True)
-st.image("MRA logo 9.2015-colorLG.jpg", width=500)
+st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.markdown('</div>', unsafe_allow_html=True)
 
 
