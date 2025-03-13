@@ -78,16 +78,13 @@ owner_salary = st.number_input("Owner Salary ($)", min_value=0.00, format="%.2f"
 other_benefits = st.number_input("Other Benefits ($)", min_value=0.00, format="%.2f")
 add_backs = st.number_input("Add-Backs (Discretionary Expenses) ($)", min_value=0.00, format="%.2f")
 
-# Calculate total owner benefit
-total_owner_benefit = ebitda + owner_salary + other_benefits + add_backs
+# Ensure ebitda exists before using it
+total_owner_benefit = 0  # Default to prevent errors
+if "ebitda" in locals():
+    total_owner_benefit = ebitda + owner_salary + other_benefits + add_backs
 
 # Display results
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.2f}**")
-
-# Ensure that total income valuation calculation only happens when there are valid inputs
-if total_owner_benefit > 0:
-    total_income_valuation = total_owner_benefit * 1.25  # Using a low multiple valuation
-    st.write(f"### Total Income Valuation: **${total_income_valuation:,.2f}**")
 
 # Section 4: Determining the Multiple
 st.subheader("Determining the Multiple")
@@ -95,10 +92,12 @@ st.subheader("Determining the Multiple")
 # Explanation of multiples
 st.markdown("""
 ### How Multiples Work
-Multiples help determine the estimated business valuation. The most common multiples for small businesses in the restaurant industry range from **1.25x to 2.0x** of owner benefit.
+Multiples help determine the estimated business valuation. 
+The most common multiples for small businesses in the restaurant industry range from **1.25x to 2.0x** of owner benefit.
 """)
 
-# Ensure calculation only happens when total_owner_benefit > 0
+# Ensure multiple calculations only happen when total_owner_benefit > 0
+low_multiple, median_multiple, high_multiple = 0, 0, 0  # Default values to avoid errors
 if total_owner_benefit > 0:
     low_multiple = total_owner_benefit * 1.25
     median_multiple = total_owner_benefit * 1.5
@@ -109,7 +108,7 @@ if total_owner_benefit > 0:
     st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.2f}**")
     st.write(f"#### High Multiple (2.0x): **${high_multiple:,.2f}**")
 else:
-    st.write("⚠️ **Enter values above to calculate multiple valuations.**")
+    st.warning("⚠️ **Enter values above to calculate multiple valuations.**")
 
 # Section 5: Export Results
 st.subheader("Export Results")
@@ -118,11 +117,13 @@ st.subheader("Export Results")
 data = {
     "Metric": ["Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit", 
                "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
-    "Value": [total_expenses, ebitda, f"{ebitda_margin:.2f}%", total_owner_benefit, 
-              low_multiple, median_multiple, high_multiple]
+    "Value": [
+        total_expenses, ebitda, f"{ebitda_margin:.2f}%", total_owner_benefit, 
+        low_multiple, median_multiple, high_multiple
+    ]
 }
 
 df = pd.DataFrame(data)
 
-# Export buttons
+# Export button
 st.download_button(label="Download Results as CSV", data=df.to_csv(index=False), file_name="ebitda_results.csv", mime="text/csv")
