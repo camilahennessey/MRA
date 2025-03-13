@@ -70,7 +70,6 @@ else:
     ax.set_title("EBITDA Margin Breakdown")
     st.pyplot(fig)
 
-<<<<<<< HEAD
 # Section 3: Owner Benefit Calculation
 st.subheader("Owner Benefit Calculation")
 
@@ -111,6 +110,7 @@ if total_owner_benefit > 0:
     st.write(f"#### High Multiple (2.0x): **${high_multiple:,.2f}**")
 else:
     st.write("⚠️ **Enter values above to calculate multiple valuations.**")
+
 # Section 5: Export Results
 st.subheader("Export Results")
 
@@ -126,5 +126,3 @@ df = pd.DataFrame(data)
 
 # Export buttons
 st.download_button(label="Download Results as CSV", data=df.to_csv(index=False), file_name="ebitda_results.csv", mime="text/csv")
-=======
->>>>>>> 5ad9cad000f0aa2ecd3f4ba562081ea7a989aea2
