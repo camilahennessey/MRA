@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 # Centering image using st.image() with CSS styling
 st.markdown(
@@ -110,6 +113,24 @@ if total_owner_benefit > 0:
 else:
     st.warning("⚠️ **Enter values above to calculate multiple valuations.**")
 
+# Function to generate PDF
+def generate_pdf(data):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(100, height - 50, "MRA EBITDA Valuation Report")
+
+    y_position = height - 100
+    for metric, value in zip(data["Metric"], data["Value"]):
+        pdf.drawString(100, y_position, f"{metric}: {value}")
+        y_position -= 20
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
 # Section 5: Export Results
 st.subheader("Export Results")
 
@@ -117,13 +138,19 @@ st.subheader("Export Results")
 data = {
     "Metric": ["Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit", 
                "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
-    "Value": [
-        total_expenses, ebitda, f"{ebitda_margin:.2f}%", total_owner_benefit, 
-        low_multiple, median_multiple, high_multiple
-    ]
+    "Value": [total_expenses, ebitda, f"{ebitda_margin:.2f}%", total_owner_benefit, 
+              low_multiple if total_owner_benefit > 0 else 0, 
+              median_multiple if total_owner_benefit > 0 else 0, 
+              high_multiple if total_owner_benefit > 0 else 0]
 }
 
-df = pd.DataFrame(data)
+# Generate PDF
+pdf_buffer = generate_pdf(data)
 
-# Export button
-st.download_button(label="Download Results as CSV", data=df.to_csv(index=False), file_name="ebitda_results.csv", mime="text/csv")
+# Streamlit Download Button for PDF
+st.download_button(
+    label="Download Results as PDF",
+    data=pdf_buffer,
+    file_name="ebitda_results.pdf",
+    mime="application/pdf"
+)
