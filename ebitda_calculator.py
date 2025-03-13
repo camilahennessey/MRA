@@ -119,10 +119,12 @@ data = {
     "Metric": ["Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit", 
                "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
     "Value": [total_expenses, ebitda, f"{ebitda_margin:.2f}%", total_owner_benefit, 
-              low_multiple, median_multiple, high_multiple]
+              low_multiple if total_owner_benefit > 0 else 0, 
+              median_multiple if total_owner_benefit > 0 else 0, 
+              high_multiple if total_owner_benefit > 0 else 0]
 }
 
 df = pd.DataFrame(data)
 
-# Export buttons
+# Export button
 st.download_button(label="Download Results as CSV", data=df.to_csv(index=False), file_name="ebitda_results.csv", mime="text/csv")
