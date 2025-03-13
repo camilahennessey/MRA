@@ -67,3 +67,59 @@ else:
     ax.pie(values, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
     ax.set_title("EBITDA Margin Breakdown")
     st.pyplot(fig)
+
+# Section 3: Owner Benefit Calculation
+st.subheader("Owner Benefit Calculation")
+
+# Inputs for owner benefit
+owner_salary = st.number_input("Owner Salary ($)", min_value=0.00, format="%.2f")
+other_benefits = st.number_input("Other Benefits ($)", min_value=0.00, format="%.2f")
+add_backs = st.number_input("Add-Backs (Discretionary Expenses) ($)", min_value=0.00, format="%.2f")
+
+# Calculate total owner benefit
+total_owner_benefit = ebitda + owner_salary + other_benefits + add_backs
+
+# Display results
+st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.2f}**")
+
+# Ensure that total income valuation calculation only happens when there are valid inputs
+if total_owner_benefit > 0:
+    total_income_valuation = total_owner_benefit * 1.25  # Using a low multiple valuation
+    st.write(f"### Total Income Valuation: **${total_income_valuation:,.2f}**")
+
+# Section 4: Determining the Multiple
+st.subheader("Determining the Multiple")
+
+# Explanation of multiples
+st.markdown("""
+### How Multiples Work
+Multiples help determine the estimated business valuation. The most common multiples for small businesses in the restaurant industry range from **1.25x to 2.0x** of owner benefit.
+""")
+
+# Ensure calculation only happens when total_owner_benefit > 0
+if total_owner_benefit > 0:
+    low_multiple = total_owner_benefit * 1.25
+    median_multiple = total_owner_benefit * 1.5
+    high_multiple = total_owner_benefit * 2.0
+
+    # Display multiple valuations
+    st.write(f"#### Low Multiple (1.25x): **${low_multiple:,.2f}**")
+    st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.2f}**")
+    st.write(f"#### High Multiple (2.0x): **${high_multiple:,.2f}**")
+else:
+    st.write("⚠️ **Enter values above to calculate multiple valuations.**")
+# Section 5: Export Results
+st.subheader("Export Results")
+
+# Convert results into a DataFrame for exporting
+data = {
+    "Metric": ["Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit", 
+               "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
+    "Value": [total_expenses, ebitda, f"{ebitda_margin:.2f}%", total_owner_benefit, 
+              low_multiple, median_multiple, high_multiple]
+}
+
+df = pd.DataFrame(data)
+
+# Export buttons
+st.download_button(label="Download Results as CSV", data=df.to_csv(index=False), file_name="ebitda_results.csv", mime="text/csv")
