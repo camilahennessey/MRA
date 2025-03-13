@@ -54,9 +54,11 @@ st.write(f"### Total Operating Expenses: **${total_expenses:,.2f}**")
 st.write(f"### EBITDA: **${ebitda:,.2f}**")
 st.write(f"### EBITDA Margin: **{ebitda_margin:.2f}%**")
 
-# Preventing Pie Chart NaN issues
+# Preventing Pie Chart NaN issues & Handling Negative EBITDA
 if total_expenses == 0 and ebitda == 0:
     st.write("⚠️ **Enter values above to generate the pie chart.**")
+elif ebitda < 0:
+    st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
     fig, ax = plt.subplots(figsize=(6,6))
@@ -68,6 +70,7 @@ else:
     ax.set_title("EBITDA Margin Breakdown")
     st.pyplot(fig)
 
+<<<<<<< HEAD
 # Section 3: Owner Benefit Calculation
 st.subheader("Owner Benefit Calculation")
 
@@ -123,3 +126,5 @@ df = pd.DataFrame(data)
 
 # Export buttons
 st.download_button(label="Download Results as CSV", data=df.to_csv(index=False), file_name="ebitda_results.csv", mime="text/csv")
+=======
+>>>>>>> 5ad9cad000f0aa2ecd3f4ba562081ea7a989aea2
