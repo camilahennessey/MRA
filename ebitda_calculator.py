@@ -5,14 +5,14 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-# Styling for image centering
+# Styling for image centering and input alignment
 st.markdown("""
 <style>
 .centered-image {
     display: flex;
     justify-content: center;
 }
-input[type=number] {
+input[type=number], input[type=text] {
     text-align: right;
 }
 </style>
@@ -29,14 +29,14 @@ st.title("MRA EBITDA Valuation Calculator")
 name = st.text_input("Enter Your Name")
 email = st.text_input("Enter Your Email")
 
-# Helper to parse comma inputs
+# Helper to parse input with commas
 def parse_input(input_str):
     try:
         return float(input_str.replace(",", ""))
     except:
         return 0.0
 
-# Financial Inputs (with commas)
+# Section 1: Financial Inputs
 st.subheader("Enter Financial Information")
 net_sales_str = st.text_input("Net Sales ($)", value="0")
 cogs_str = st.text_input("Cost of Goods Sold (COGS) ($)", value="0")
@@ -56,7 +56,7 @@ if net_sales > 0:
 else:
     total_expenses, ebitda, ebitda_margin = 0, 0, 0
 
-# Display
+# Display EBITDA Results
 st.write(f"### Total Operating Expenses: **${total_expenses:,.0f}**")
 st.write(f"### EBITDA: **${ebitda:,.0f}**")
 st.write(f"### EBITDA Margin: **{ebitda_margin:.2f}%**")
@@ -74,7 +74,7 @@ else:
     ax.set_title("EBITDA Margin Breakdown")
     st.pyplot(fig)
 
-# Owner Benefit Calculation Inputs
+# Section 2: Owner Benefit Calculation
 st.subheader("Owner Benefit Calculation")
 categories = {
     "Owner’s Compensation": st.text_input("Owner’s Compensation ($)", value="0"),
@@ -93,40 +93,44 @@ categories = {
     "Other 3": st.text_input("Other 3 ($)", value="0"),
 }
 
-# Total Owner Benefit Calculation
+# Calculate Total Owner Benefit
 total_owner_benefit = sum(parse_input(val) for val in categories.values())
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
 
-# Multiples
+# Section 3: Determining the Multiple
 st.subheader("Determining the Multiple")
 st.markdown("""
 ### How Multiples Work  
-Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.25x to 2.0x** of owner benefit.
+Multiples vary by market, concept, geography, and a wide variety of elements.  
+Restaurants heading into season will sell at a higher multiple than out of season.  
+The characteristics that determine the multiple are:  
+**Quality of operations, earnings level, market saturation, number of units, seasonality, geography, location, competition, etc.**
 """)
 
-low_multiple = total_owner_benefit * 1.25
-median_multiple = total_owner_benefit * 1.5
-high_multiple = total_owner_benefit * 2.0
+# Calculate Total Income Valuation and Multiples
+total_income_valuation = ebitda + total_owner_benefit
+st.write(f"### Total Income Valuation: **${total_income_valuation:,.0f}**")
 
-if total_owner_benefit > 0:
-    st.write(f"#### Low Multiple (1.25x): **${low_multiple:,.0f}**")
-    st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.0f}**")
-    st.write(f"#### High Multiple (2.0x): **${high_multiple:,.0f}**")
-else:
-    st.warning("⚠️ **Enter values above to calculate multiple valuations.**")
+low_multiple = total_income_valuation * 1.25
+median_multiple = total_income_valuation * 1.5
+high_multiple = total_income_valuation * 2.0
 
-# Export PDF
+st.write(f"#### Low Multiple Valuation (1.25x): **${low_multiple:,.0f}**")
+st.write(f"#### Median Multiple Valuation (1.5x): **${median_multiple:,.0f}**")
+st.write(f"#### High Multiple Valuation (2.0x): **${high_multiple:,.0f}**")
+
+# Section 4: Export Results
 st.subheader("Export Results")
 
-# Create Data
+# Prepare Data for Export
 data = {
     "Metric": ["Name", "Email", "Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit",
-               "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
+               "Total Income Valuation", "Low Multiple Valuation (1.25x)", "Median Multiple Valuation (1.5x)", "High Multiple Valuation (2.0x)"],
     "Value": [name, email, f"${total_expenses:,.0f}", f"${ebitda:,.0f}", f"{ebitda_margin:.2f}%", f"${total_owner_benefit:,.0f}",
-              f"${low_multiple:,.0f}", f"${median_multiple:,.0f}", f"${high_multiple:,.0f}"]
+              f"${total_income_valuation:,.0f}", f"${low_multiple:,.0f}", f"${median_multiple:,.0f}", f"${high_multiple:,.0f}"]
 }
 
-# Generate PDF
+# Generate PDF Function
 def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -143,5 +147,6 @@ def generate_pdf(data):
     buffer.seek(0)
     return buffer
 
+# Generate and Offer PDF for Download
 pdf_buffer = generate_pdf(data)
 st.download_button(label="Download Results as PDF", data=pdf_buffer, file_name="ebitda_results.pdf", mime="application/pdf")
