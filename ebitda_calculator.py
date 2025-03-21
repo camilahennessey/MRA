@@ -59,7 +59,7 @@ else:
 # Display EBITDA Results
 st.write(f"### Total Operating Expenses: **${total_expenses:,.0f}**")
 st.write(f"### EBITDA: **${ebitda:,.0f}**")
-st.write(f"### EBITDA Margin: **{ebitda_margin:.2f}%**")
+st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
 # Pie Chart (Smaller Size)
 if total_expenses == 0 and ebitda == 0:
@@ -68,7 +68,7 @@ elif ebitda < 0:
     st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
-    fig, ax = plt.subplots(figsize=(4,4))
+    fig, ax = plt.subplots(figsize=(3,3))  # Smaller chart
     ax.pie([total_expenses, ebitda], labels=["Total Operating Expenses", "EBITDA"],
            autopct='%1.1f%%', colors=['#4C72B0', '#55A868'], startangle=140)
     ax.set_title("EBITDA Margin Breakdown")
@@ -126,7 +126,7 @@ st.subheader("Export Results")
 data = {
     "Metric": ["Name", "Email", "Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit",
                "Total Income Valuation", "Low Multiple Valuation (1.25x)", "Median Multiple Valuation (1.5x)", "High Multiple Valuation (2.0x)"],
-    "Value": [name, email, f"${total_expenses:,.0f}", f"${ebitda:,.0f}", f"{ebitda_margin:.2f}%", f"${total_owner_benefit:,.0f}",
+    "Value": [name, email, f"${total_expenses:,.0f}", f"${ebitda:,.0f}", f"{ebitda_margin:.0f}%", f"${total_owner_benefit:,.0f}",
               f"${total_income_valuation:,.0f}", f"${low_multiple:,.0f}", f"${median_multiple:,.0f}", f"${high_multiple:,.0f}"]
 }
 
@@ -147,6 +147,5 @@ def generate_pdf(data):
     buffer.seek(0)
     return buffer
 
-# Generate and Offer PDF for Download
 pdf_buffer = generate_pdf(data)
 st.download_button(label="Download Results as PDF", data=pdf_buffer, file_name="ebitda_results.pdf", mime="application/pdf")
