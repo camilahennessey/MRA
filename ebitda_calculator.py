@@ -68,7 +68,7 @@ elif ebitda < 0:
     st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
-    fig, ax = plt.subplots(figsize=(3,3))  # Smaller chart
+    fig, ax = plt.subplots(figsize=(2,2))  # Smaller chart
     ax.pie([total_expenses, ebitda], labels=["Total Operating Expenses", "EBITDA"],
            autopct='%1.1f%%', colors=['#4C72B0', '#55A868'], startangle=140)
     ax.set_title("EBITDA Margin Breakdown")
