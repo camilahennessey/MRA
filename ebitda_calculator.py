@@ -22,21 +22,20 @@ st.markdown('<div class="centered-image">', unsafe_allow_html=True)
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Title ---
 st.title("MRA EBITDA Valuation Calculator")
 
-# --- Name & Email ---
+# --- Name and Email ---
 name = st.text_input("Enter Your Name")
 email = st.text_input("Enter Your Email")
 
-# --- Helper to parse comma inputs ---
+# --- Helper Function ---
 def parse_input(input_str):
     try:
-        return float(input_str.replace(",", ""))
+        return float(input_str.replace(",", "").replace("$", ""))
     except:
         return 0.0
 
-# --- Financial Inputs ---
+# --- Section 1: Financial Info ---
 st.subheader("Enter Financial Information")
 net_sales_str = st.text_input("Net Sales ($)", value="0")
 cogs_str = st.text_input("Cost of Goods Sold (COGS) ($)", value="0")
@@ -48,7 +47,6 @@ cogs = parse_input(cogs_str)
 employee_cost = parse_input(employee_cost_str)
 other_operating_cost = parse_input(other_operating_cost_str)
 
-# --- EBITDA Calculation ---
 if net_sales > 0:
     total_expenses = cogs + employee_cost + other_operating_cost
     ebitda = net_sales - total_expenses
@@ -56,39 +54,36 @@ if net_sales > 0:
 else:
     total_expenses, ebitda, ebitda_margin = 0, 0, 0
 
-# --- Display ---
 st.write(f"### Total Operating Expenses: **${total_expenses:,.0f}**")
 st.write(f"### EBITDA: **${ebitda:,.0f}**")
 st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
-# --- Donut Chart ---
+# --- Donut Chart (Enhanced) ---
 if total_expenses > 0 and ebitda >= 0:
     st.subheader("EBITDA Margin Breakdown")
-    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Compact size
+    fig, ax = plt.subplots(figsize=(4, 4))
 
     values = [total_expenses, ebitda]
-    colors = ['#4C72B0', '#F28E2B']  # Blue, Orange
+    colors = ['#4C72B0', '#F28E2B']
+    labels = ['Total Operating Expense ($)', 'EBITDA ($)']
 
     wedges, texts, autotexts = ax.pie(
         values,
         labels=[f"${int(v):,}" for v in values],
-        autopct='',
         startangle=90,
         colors=colors,
-        wedgeprops={'width': 0.4},
-        textprops={'fontsize': 10}
+        wedgeprops={'width': 0.4, 'edgecolor': 'white'},
+        textprops={'fontsize': 10, 'fontweight': 'bold'}
     )
 
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=14, fontweight='bold')
-    ax.set_title("EBITDA Margin", fontsize=14)
+    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=18, fontweight='bold')
+    ax.set_title("EBITDA Margin", fontsize=16, fontweight='bold')
     ax.axis('equal')
-    st.pyplot(fig)
-elif ebitda < 0:
-    st.error("⚠️ **EBITDA is negative. Chart cannot be generated.**")
-else:
-    st.write("⚠️ **Enter values above to generate the chart.**")
+    ax.legend(labels, loc='lower center', bbox_to_anchor=(0.5, -0.1), fontsize=10, frameon=False)
 
-# --- Owner Benefit Inputs ---
+    st.pyplot(fig)
+
+# --- Section 2: Owner Benefit Calculation ---
 st.subheader("Owner Benefit Calculation")
 categories = {
     "Owner’s Compensation": st.text_input("Owner’s Compensation ($)", value="0"),
@@ -107,11 +102,10 @@ categories = {
     "Other 3": st.text_input("Other 3 ($)", value="0"),
 }
 
-# --- Total Owner Benefit Calculation ---
 total_owner_benefit = sum(parse_input(val) for val in categories.values())
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
 
-# --- Multiples ---
+# --- Section 3: Multiple Calculation ---
 st.subheader("Determining the Multiple")
 st.markdown("""
 ### How Multiples Work  
@@ -129,17 +123,16 @@ if total_owner_benefit > 0:
 else:
     st.warning("⚠️ **Enter values above to calculate multiple valuations.**")
 
-# --- Export PDF ---
+# --- Section 4: Export Results ---
 st.subheader("Export Results")
 
-export_data = {
+data = {
     "Metric": ["Name", "Email", "Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit",
                "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
     "Value": [name, email, f"${total_expenses:,.0f}", f"${ebitda:,.0f}", f"{ebitda_margin:.0f}%", f"${total_owner_benefit:,.0f}",
               f"${low_multiple:,.0f}", f"${median_multiple:,.0f}", f"${high_multiple:,.0f}"]
 }
 
-# PDF generation
 def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -156,5 +149,5 @@ def generate_pdf(data):
     buffer.seek(0)
     return buffer
 
-pdf_buffer = generate_pdf(export_data)
+pdf_buffer = generate_pdf(data)
 st.download_button(label="Download Results as PDF", data=pdf_buffer, file_name="ebitda_results.pdf", mime="application/pdf")
