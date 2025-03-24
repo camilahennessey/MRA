@@ -68,28 +68,43 @@ elif ebitda < 0:
 else:
     st.subheader("EBITDA Margin Breakdown")
 
+    import matplotlib.patches as mpatches
+
+    # Chart data
     values = [total_expenses, ebitda]
     labels = ["Total Operating Expense ($)", "EBITDA ($)"]
     colors = ['#4C72B0', '#F28E2B']
 
-    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Smaller chart
-    wedges, _, _ = ax.pie(
+    # Create smaller figure
+    fig, ax = plt.subplots(figsize=(2, 2))  # Reduced size
+
+    # Donut chart without slice labels
+    wedges, _ = ax.pie(
         values,
         colors=colors,
         startangle=90,
-        wedgeprops=dict(width=0.4)
+        wedgeprops=dict(width=0.3),
+        radius=1.0
     )
 
-    # Draw percentage inside donut
-    ax.text(0, 0, f"{int(ebitda_margin)}%", ha='center', va='center', fontsize=16, fontweight='bold')
+    # Add percentage text inside donut
+    ax.text(0, 0, f"{int(round(ebitda_margin))}%", ha='center', va='center',
+            fontsize=12, fontweight='bold', color='black')
 
-    # Title
-    ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold')
+    # Title above chart
+    ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold', pad=20)
 
-    # Legend below the chart
-    ax.legend(wedges, labels, loc='lower center', bbox_to_anchor=(0.5, -0.2),
-              ncol=2, frameon=False, fontsize=9)
+    # Create custom legend handles
+    legend_handles = [
+        mpatches.Patch(color=colors[0], label=labels[0]),
+        mpatches.Patch(color=colors[1], label=labels[1])
+    ]
 
+    # Legend below chart
+    ax.legend(handles=legend_handles, loc='upper center', bbox_to_anchor=(0.5, -0.1),
+              ncol=1, frameon=False, fontsize=10)
+
+    ax.axis('equal')  # Ensure perfect circle
     st.pyplot(fig)
 
 # Owner Benefit inputs
