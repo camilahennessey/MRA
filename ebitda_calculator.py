@@ -61,27 +61,28 @@ st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 # --- Donut Chart (Enhanced) ---
 if total_expenses > 0 and ebitda >= 0:
     st.subheader("EBITDA Margin Breakdown")
+   
     fig, ax = plt.subplots(figsize=(4, 4))
 
-    values = [total_expenses, ebitda]
-    colors = ['#4C72B0', '#F28E2B']
-    labels = ['Total Operating Expense ($)', 'EBITDA ($)']
+values = [total_expenses, ebitda]
+colors = ['#4C72B0', '#F28E2B']
+labels = ['Total Operating Expense ($)', 'EBITDA ($)']
 
-    wedges, texts, autotexts = ax.pie(
-        values,
-        labels=[f"${int(v):,}" for v in values],
-        startangle=90,
-        colors=colors,
-        wedgeprops={'width': 0.4, 'edgecolor': 'white'},
-        textprops={'fontsize': 10, 'fontweight': 'bold'}
-    )
+wedges, texts = ax.pie(
+    values,
+    labels=[f"${int(v):,}" for v in values],
+    startangle=90,
+    colors=colors,
+    wedgeprops={'width': 0.4, 'edgecolor': 'white'},
+    textprops={'fontsize': 10, 'fontweight': 'bold'}
+)
 
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=18, fontweight='bold')
-    ax.set_title("EBITDA Margin", fontsize=16, fontweight='bold')
-    ax.axis('equal')
-    ax.legend(labels, loc='lower center', bbox_to_anchor=(0.5, -0.1), fontsize=10, frameon=False)
+ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=18, fontweight='bold')
+ax.set_title("EBITDA Margin", fontsize=16, fontweight='bold')
+ax.axis('equal')
+ax.legend(labels, loc='lower center', bbox_to_anchor=(0.5, -0.1), fontsize=10, frameon=False)
 
-    st.pyplot(fig)
+st.pyplot(fig)
 
 # --- Section 2: Owner Benefit Calculation ---
 st.subheader("Owner Benefit Calculation")
