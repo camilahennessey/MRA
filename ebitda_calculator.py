@@ -29,6 +29,17 @@ st.title("MRA EBITDA Valuation Calculator")
 name = st.text_input("Enter Your Name")
 email = st.text_input("Enter Your Email")
 
+st.markdown("""
+### What is EBITDA?  
+EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization) is a key financial metric used to analyze a restaurant's operational performance.  
+It provides a holistic view of business profitability before accounting for non-operating expenses.
+
+### Why is EBITDA Important?  
+- Helps compare operational profitability across businesses.  
+- Excludes tax and financing decisions to show core earnings.  
+- Useful for investors evaluating a restaurant’s financial health.
+""")
+
 # Helper for comma input parsing
 def parse_input(input_str):
     try:
