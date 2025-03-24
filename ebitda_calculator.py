@@ -67,31 +67,28 @@ elif ebitda < 0:
     st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
-    
-    # Updated Donut Chart Code
+
     values = [total_expenses, ebitda]
     labels = ["Total Operating Expense ($)", "EBITDA ($)"]
     colors = ['#4C72B0', '#F28E2B']
 
-    fig, ax = plt.subplots(figsize=(4, 4))
-    wedges, texts, autotexts = ax.pie(
+    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Smaller chart
+    wedges, _, _ = ax.pie(
         values,
         colors=colors,
         startangle=90,
-        wedgeprops=dict(width=0.3),
-        labels=[f"${v:,.0f}" for v in values],
-        labeldistance=1.1
+        wedgeprops=dict(width=0.4)
     )
 
+    # Draw percentage inside donut
     ax.text(0, 0, f"{int(ebitda_margin)}%", ha='center', va='center', fontsize=16, fontweight='bold')
-    ax.set_title("EBITDA Margin", fontsize=16, fontweight='bold')
 
-    for text in texts:
-        text.set_fontsize(10)
-        text.set_weight('normal')
+    # Title
+    ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold')
 
-    ax.legend(labels, loc='lower center', bbox_to_anchor=(0.5, -0.15),
-              ncol=2, frameon=False, fontsize=10)
+    # Legend below the chart
+    ax.legend(wedges, labels, loc='lower center', bbox_to_anchor=(0.5, -0.2),
+              ncol=2, frameon=False, fontsize=9)
 
     st.pyplot(fig)
 
