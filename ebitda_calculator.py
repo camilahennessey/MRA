@@ -69,44 +69,42 @@ elif ebitda < 0:
 else:
     st.subheader("EBITDA Margin Breakdown")
 
-    # Chart data
-    values = [total_expenses, ebitda]
-    labels = ["Total Operating Expense ($)", "EBITDA ($)"]
-    colors = ['#4C72B0', '#F28E2B']
+# Donut Chart Block - Replace this entire section
+st.subheader("EBITDA Margin Breakdown")
 
-    # Create smaller figure
-    fig, ax = plt.subplots(figsize=(4, 4))  # Reduced size
+# Chart data
+values = [total_expenses, ebitda]
+labels = ["Total Operating Expense ($)", "EBITDA ($)"]
+colors = ['#4C72B0', '#F28E2B']
 
-    # Donut chart without slice labels
-    wedges, _ = ax.pie(
-        values,
-        colors=colors,
-        startangle=90,
-        wedgeprops=dict(width=0.3),
-        radius=1.0
-    )
+# Create slightly larger figure to avoid crowding
+fig, ax = plt.subplots(figsize=(5, 5))
 
-    # Add percentage text inside donut
-    ax.text(0, 0, f"{int(round(ebitda_margin))}%", ha='center', va='center',
-            fontsize=16, fontweight='bold', color='black')
+# Donut chart
+wedges, texts = ax.pie(
+    values,
+    colors=colors,
+    startangle=90,
+    wedgeprops=dict(width=0.3),
+    radius=1.0
+)
 
-    # Title above chart
-    ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold', pad=20)
+# Add central EBITDA Margin percentage
+ax.text(0, 0, f"{int(round(ebitda_margin))}%", ha='center', va='center',
+        fontsize=16, fontweight='bold', color='black')
 
-    # Create custom legend handles
-    legend_handles = [
-        mpatches.Patch(color=colors[0], label=labels[0]),
-        mpatches.Patch(color=colors[1], label=labels[1])
-    ]
+# Title above chart
+ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold', pad=20)
 
-    # Legend below chart
-    ax.legend(handles=legend_handles, loc='upper center', bbox_to_anchor=(0.5, -0.1),
-              ncol=1, frameon=False, fontsize=10)
+# Legend BELOW chart (adjusted position to avoid overlap)
+ax.legend(wedges, labels, loc='upper center', bbox_to_anchor=(0.5, -0.15),
+          ncol=2, frameon=False, fontsize=10)
 
-    ax.axis('equal')  # Ensure perfect circle
-    st.pyplot(fig)
+ax.axis('equal')  # Equal aspect ratio
+plt.tight_layout()
+st.pyplot(fig)
 
-# Owner Benefit inputs
+    # Owner Benefit inputs
 st.subheader("Owner Benefit Calculation")
 categories = {
     "Owner’s Compensation": st.text_input("Owner’s Compensation ($)", value="0"),
