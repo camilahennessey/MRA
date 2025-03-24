@@ -47,6 +47,14 @@ def parse_input(input_str):
     except:
         return 0.0
 
+# Helper function for autopct formatting
+def make_autopct(values):
+    def autopct(pct):
+        total = sum(values)
+        val = int(round(pct * total / 100.0))
+        return f"${val:,}"
+    return autopct
+
 # Financial inputs
 st.subheader("Enter Financial Information")
 net_sales_str = st.text_input("Net Sales ($)", value="0")
@@ -71,8 +79,7 @@ st.write(f"### Total Operating Expenses: **${total_expenses:,.0f}**")
 st.write(f"### EBITDA: **${ebitda:,.0f}**")
 st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
-# Donut chart
-# Pie Chart (Smaller Size)
+# Donut Chart Visualization
 if total_expenses == 0 and ebitda == 0:
     st.write("⚠️ **Enter values above to generate the pie chart.**")
 elif ebitda < 0:
@@ -80,49 +87,39 @@ elif ebitda < 0:
 else:
     st.subheader("EBITDA Margin Breakdown")
 
-# Enhanced Donut Chart
-st.subheader("EBITDA Margin Breakdown")
+    # Data for chart
+    values = [total_expenses, ebitda]
+    labels = ["Total Operating Expense", "EBITDA"]
+    colors = ['#2E86AB', '#F5B041']
 
-# Data for the chart
-values = [total_expenses, ebitda]
-labels = ["Total Operating Expense", "EBITDA"]
-colors = ['#2E86AB', '#F5B041']  # Blue + Gold color scheme
+    # Create the figure
+    fig, ax = plt.subplots(figsize=(6, 6))
 
-# Create the figure
-fig, ax = plt.subplots(figsize=(6, 6))
+    wedges, texts, autotexts = ax.pie(
+        values,
+        labels=labels,
+        colors=colors,
+        autopct=make_autopct(values),  # FIXED AUTOPCT FUNCTION
+        startangle=90,
+        wedgeprops=dict(width=0.4, edgecolor='white'),
+        textprops=dict(color="black", fontsize=10),
+    )
 
-# Draw the donut chart
-wedges, texts, autotexts = ax.pie(
-    values,
-    labels=labels,
-    colors=colors,
-    autopct=lambda pct: f"${int(round(pct * sum(values) / 100)):,}",
-    startangle=90,
-    wedgeprops=dict(width=0.4, edgecolor='white'),
-    textprops=dict(color="black", fontsize=10),
-)
+    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center',
+            fontsize=24, fontweight='bold', color='black')
 
-# Add central EBITDA Margin percentage
-ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center',
-        fontsize=24, fontweight='bold', color='black')
+    ax.set_title("EBITDA Margin", fontsize=18, fontweight='bold', pad=20)
 
-# Title
-ax.set_title("EBITDA Margin", fontsize=18, fontweight='bold', pad=20)
+    legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
+    patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
+    ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.2),
+              ncol=1, frameon=False, fontsize=11)
 
-# Custom legend with values
-legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
-patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
-ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.2),
-          ncol=1, frameon=False, fontsize=11)
+    ax.axis('equal')
+    plt.tight_layout()
+    st.pyplot(fig)
 
-# Final layout
-ax.axis('equal')
-plt.tight_layout()
-
-# Display in Streamlit
-st.pyplot(fig)
-
-    # Owner Benefit inputs
+# Owner Benefit inputs
 st.subheader("Owner Benefit Calculation")
 categories = {
     "Owner’s Compensation": st.text_input("Owner’s Compensation ($)", value="0"),
@@ -142,22 +139,19 @@ categories = {
 }
 
 total_owner_benefit = sum(parse_input(val) for val in categories.values())
-# Owner Benefit Summary
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
 
-# EBITDA + Owner Benefit = Valuation Base
+# Valuation Base: EBITDA + Owner Benefit
 valuation_base = ebitda + total_owner_benefit
-st.write("### Valuation Base (EBITDA + Owner Benefit): "
-         f"**${valuation_base:,.0f}**")
+st.write(f"### Valuation Base (EBITDA + Owner Benefit): **${valuation_base:,.0f}**")
 
-# Informational section on multiples
+# Multiples Section
 st.subheader("Determining the Multiple")
 st.markdown("""
 ### How Multiples Work  
 Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.25x to 2.0x** of the EBITDA + Owner Benefit.
 """)
 
-# Valuation Multiples (MATCHES EXCEL)
 low_multiple = valuation_base * 1.25
 median_multiple = valuation_base * 1.5
 high_multiple = valuation_base * 2.0
@@ -169,28 +163,6 @@ if valuation_base > 0:
 else:
     st.warning("⚠️ **Enter values above to calculate multiple valuations.**")
 
-# Export PDF
+# PDF Export
 st.subheader("Export Results")
 data = {
-    "Metric": ["Name", "Email", "Total Operating Expenses", "EBITDA", "EBITDA Margin", "Total Owner Benefit",
-               "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
-    "Value": [name, email, f"${total_expenses:,.0f}", f"${ebitda:,.0f}", f"{ebitda_margin:.0f}%", f"${total_owner_benefit:,.0f}",
-              f"${low_multiple:,.0f}", f"${median_multiple:,.0f}", f"${high_multiple:,.0f}"]
-}
-
-def generate_pdf(data):
-    buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
-    pdf.setFont("Helvetica", 12)
-    pdf.drawString(100, height - 50, "MRA EBITDA Valuation Report")
-    y_position = height - 100
-    for metric, value in zip(data["Metric"], data["Value"]):
-        pdf.drawString(100, y_position, f"{metric}: {value}")
-        y_position -= 20
-    pdf.save()
-    buffer.seek(0)
-    return buffer
-
-pdf_buffer = generate_pdf(data)
-st.download_button(label="Download Results as PDF", data=pdf_buffer, file_name="ebitda_results.pdf", mime="application/pdf")
