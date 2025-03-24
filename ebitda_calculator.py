@@ -60,35 +60,38 @@ st.write(f"### EBITDA: **${ebitda:,.0f}**")
 st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
 # Donut chart
+# Pie Chart (Smaller Size)
 if total_expenses == 0 and ebitda == 0:
-    st.write("⚠️ **Enter values above to generate the chart.**")
+    st.write("⚠️ **Enter values above to generate the pie chart.**")
 elif ebitda < 0:
-    st.error("⚠️ **EBITDA is negative. A chart cannot be generated.**")
+    st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
-    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Smaller chart
-
+    
+    # Updated Donut Chart Code
     values = [total_expenses, ebitda]
+    labels = ["Total Operating Expense ($)", "EBITDA ($)"]
     colors = ['#4C72B0', '#F28E2B']
-    labels = ['Total Operating Expense ($)', 'EBITDA ($)']
 
-    wedges, _ = ax.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.4), radius=0.9)
+    fig, ax = plt.subplots(figsize=(4, 4))
+    wedges, texts, autotexts = ax.pie(
+        values,
+        colors=colors,
+        startangle=90,
+        wedgeprops=dict(width=0.3),
+        labels=[f"${v:,.0f}" for v in values],
+        labeldistance=1.1
+    )
 
-    # Add value labels outside wedges
-    for i, wedge in enumerate(wedges):
-        angle = (wedge.theta2 + wedge.theta1) / 2
-        x = 1.1 * 0.9 * plt.cos(angle * plt.pi / 180)
-        y = 1.1 * 0.9 * plt.sin(angle * plt.pi / 180)
-        value_label = f"${values[i]:,.0f}"
-        ax.text(x, y, value_label, ha='center', va='center', fontsize=10, weight='bold')
+    ax.text(0, 0, f"{int(ebitda_margin)}%", ha='center', va='center', fontsize=16, fontweight='bold')
+    ax.set_title("EBITDA Margin", fontsize=16, fontweight='bold')
 
-    # Center percentage label
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=12, weight='bold')
-    ax.set_title("EBITDA Margin", fontsize=12, weight='bold')
-    ax.axis('equal')
+    for text in texts:
+        text.set_fontsize(10)
+        text.set_weight('normal')
 
-    # Legend below the chart
-    fig.legend(wedges, labels, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+    ax.legend(labels, loc='lower center', bbox_to_anchor=(0.5, -0.15),
+              ncol=2, frameon=False, fontsize=10)
 
     st.pyplot(fig)
 
