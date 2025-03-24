@@ -166,3 +166,28 @@ else:
 # PDF Export
 st.subheader("Export Results")
 data = {
+    "Metric": ["Name", "Email", "Total Operating Expenses", "EBITDA", "EBITDA Margin",
+               "Total Owner Benefit", "Valuation Base (EBITDA + Owner Benefit)",
+               "Low Multiple (1.25x)", "Median Multiple (1.5x)", "High Multiple (2.0x)"],
+    "Value": [name, email, f"${total_expenses:,.0f}", f"${ebitda:,.0f}", f"{ebitda_margin:.0f}%",
+              f"${total_owner_benefit:,.0f}", f"${valuation_base:,.0f}",
+              f"${low_multiple:,.0f}", f"${median_multiple:,.0f}", f"${high_multiple:,.0f}"]
+}
+
+def generate_pdf(data):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(100, height - 50, "MRA EBITDA Valuation Report")
+    y_position = height - 100
+    for metric, value in zip(data["Metric"], data["Value"]):
+        pdf.drawString(100, y_position, f"{metric}: {value}")
+        y_position -= 20
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+pdf_buffer = generate_pdf(data)
+st.download_button(label="Download Results as PDF", data=pdf_buffer,
+                   file_name="ebitda_results.pdf", mime="application/pdf")
