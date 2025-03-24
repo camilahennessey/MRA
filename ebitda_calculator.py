@@ -69,15 +69,13 @@ elif ebitda < 0:
 else:
     st.subheader("EBITDA Margin Breakdown")
 
-    import matplotlib.patches as mpatches
-
     # Chart data
     values = [total_expenses, ebitda]
     labels = ["Total Operating Expense ($)", "EBITDA ($)"]
     colors = ['#4C72B0', '#F28E2B']
 
     # Create smaller figure
-    fig, ax = plt.subplots(figsize=(2, 2))  # Reduced size
+    fig, ax = plt.subplots(figsize=(4, 4))  # Reduced size
 
     # Donut chart without slice labels
     wedges, _ = ax.pie(
@@ -90,7 +88,7 @@ else:
 
     # Add percentage text inside donut
     ax.text(0, 0, f"{int(round(ebitda_margin))}%", ha='center', va='center',
-            fontsize=12, fontweight='bold', color='black')
+            fontsize=16, fontweight='bold', color='black')
 
     # Title above chart
     ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold', pad=20)
