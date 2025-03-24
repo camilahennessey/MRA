@@ -66,26 +66,30 @@ elif ebitda < 0:
     st.error("⚠️ **EBITDA is negative. A chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Smaller chart
+
     values = [total_expenses, ebitda]
-    labels = ['Total Operating Expense ($)', 'EBITDA ($)']
     colors = ['#4C72B0', '#F28E2B']
+    labels = ['Total Operating Expense ($)', 'EBITDA ($)']
 
-    wedges, texts, autotexts = ax.pie(
-        values, labels=None, colors=colors, startangle=90,
-        autopct=None, wedgeprops=dict(width=0.3), radius=1.0
-    )
+    wedges, _ = ax.pie(values, colors=colors, startangle=90, wedgeprops=dict(width=0.4), radius=0.9)
 
-    # Value labels
-    ax.text(wedges[0].get_center()[0] - 0.9, -1.2, f"${total_expenses:,.0f}", ha='center', fontsize=10, weight='bold')
-    ax.text(wedges[1].get_center()[0] + 0.5, 0.8, f"${ebitda:,.0f}", ha='center', fontsize=10, weight='bold')
+    # Add value labels outside wedges
+    for i, wedge in enumerate(wedges):
+        angle = (wedge.theta2 + wedge.theta1) / 2
+        x = 1.1 * 0.9 * plt.cos(angle * plt.pi / 180)
+        y = 1.1 * 0.9 * plt.sin(angle * plt.pi / 180)
+        value_label = f"${values[i]:,.0f}"
+        ax.text(x, y, value_label, ha='center', va='center', fontsize=10, weight='bold')
 
-    # Center text
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=16, weight='bold')
-
-    ax.set_title("EBITDA Margin", fontsize=16, weight='bold')
+    # Center percentage label
+    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=12, weight='bold')
+    ax.set_title("EBITDA Margin", fontsize=12, weight='bold')
     ax.axis('equal')
-    plt.legend(wedges, labels, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+
+    # Legend below the chart
+    fig.legend(wedges, labels, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+
     st.pyplot(fig)
 
 # Owner Benefit inputs
