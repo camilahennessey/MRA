@@ -131,20 +131,27 @@ categories = {
 }
 
 total_owner_benefit = sum(parse_input(val) for val in categories.values())
+# Owner Benefit Summary
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
 
-# Multiple Valuations
+# EBITDA + Owner Benefit = Valuation Base
+valuation_base = ebitda + total_owner_benefit
+st.write("### Valuation Base (EBITDA + Owner Benefit): "
+         f"**${valuation_base:,.0f}**")
+
+# Informational section on multiples
 st.subheader("Determining the Multiple")
 st.markdown("""
 ### How Multiples Work  
-Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.25x to 2.0x** of owner benefit.
+Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.25x to 2.0x** of the EBITDA + Owner Benefit.
 """)
 
-low_multiple = total_owner_benefit * 1.25
-median_multiple = total_owner_benefit * 1.5
-high_multiple = total_owner_benefit * 2.0
+# Valuation Multiples (MATCHES EXCEL)
+low_multiple = valuation_base * 1.25
+median_multiple = valuation_base * 1.5
+high_multiple = valuation_base * 2.0
 
-if total_owner_benefit > 0:
+if valuation_base > 0:
     st.write(f"#### Low Multiple (1.25x): **${low_multiple:,.0f}**")
     st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.0f}**")
     st.write(f"#### High Multiple (2.0x): **${high_multiple:,.0f}**")
