@@ -124,55 +124,9 @@ else:
 st.subheader("Owner Benefit Calculation")
 owner_inputs = {
     "Owner's Compensation": "",
-    "Health Insurance": "",
 }
 
 cols = st.columns(2)
 categories = {}
 for i, (label, default) in enumerate(owner_inputs.items()):
-    with cols[i % 2]:
-        st.markdown(f'<p style="font-size: 16px; font-weight: bold;">{label} ($)</p>', unsafe_allow_html=True)
-        categories[label] = st.text_input(f"{label} ($)", value=default, label_visibility="collapsed")
 
-total_owner_benefit = sum(parse_input(val) for val in categories.values())
-st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
-
-# Valuation Base Calculation
-valuation_base = ebitda + total_owner_benefit
-low_multiple = valuation_base * 1.25
-median_multiple = valuation_base * 1.5
-high_multiple = valuation_base * 2.0
-
-data = {
-    "Metric": [
-        "Name",
-        "Email",
-        "Total Operating Expenses",
-        "EBITDA",
-        "EBITDA Margin",
-        "Total Owner Benefit",
-        "Valuation Base (EBITDA + Owner Benefit)",
-        "Low Multiple (1.25x)",
-        "Median Multiple (1.5x)",
-        "High Multiple (2.0x)"
-    ],
-    "Value": [
-        name,
-        email,
-        f"${total_expenses:,.0f}",
-        f"${ebitda:,.0f}",
-        f"{ebitda_margin:.0f}%",
-        f"${total_owner_benefit:,.0f}",
-        f"${valuation_base:,.0f}",
-        f"${low_multiple:,.0f}",
-        f"${median_multiple:,.0f}",
-        f"${high_multiple:,.0f}"
-    ]
-}
-
-def generate_pdf(data):
-    buffer = BytesIO()
-    
-   # Generate PDF content logic remains unchanged.
-
-pdf_buffer
