@@ -88,19 +88,18 @@ st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
 # Donut Chart Visualization
 if total_expenses == 0 and ebitda == 0:
-    st.write("⚠️ **Enter values above to generate the pie chart.**")
+    st.warning("⚠️ Enter values above to generate the pie chart.")
 elif ebitda < 0:
-    st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
+    st.error("⚠️ EBITDA is negative. A pie chart cannot be generated.")
 else:
     st.subheader("EBITDA Margin Breakdown")
 
-    # Data for chart
     values = [total_expenses, ebitda]
     labels = ["Total Operating Expense", "EBITDA"]
     colors = ['#2E86AB', '#F5B041']
 
-    # Create a smaller figure
-    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Reduced from (6, 6)
+    # Smaller donut chart size
+    fig, ax = plt.subplots(figsize=(2.8, 2.8))  # ⬅️ Reduced size
 
     wedges, texts, autotexts = ax.pie(
         values,
@@ -108,30 +107,32 @@ else:
         colors=colors,
         autopct=make_autopct(values),
         startangle=90,
-        wedgeprops=dict(width=0.4, edgecolor='white'),
-        textprops=dict(color="black", fontsize=9)  # Smaller text
+        wedgeprops=dict(width=0.35, edgecolor='white'),  # Thinner ring
+        textprops=dict(color="black", fontsize=8)
     )
 
-    # Center text
+    # Center EBITDA % text
     ax.text(
         0, 0, f"{ebitda_margin:.0f}%",
         ha='center', va='center',
-        fontsize=14, fontweight='bold', color='black'
+        fontsize=12,
+        fontweight='bold',
+        color='black'
     )
 
-    ax.set_title("EBITDA Margin", fontsize=13, fontweight='bold', pad=15)
+    # Title
+    ax.set_title("EBITDA Margin", fontsize=12, fontweight='bold', pad=10)
 
-    # Custom legend
+    # Compact legend
     legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
     patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
-
     ax.legend(
         handles=patches,
         loc='lower center',
-        bbox_to_anchor=(0.5, -0.3),  # Move legend lower to match smaller chart
+        bbox_to_anchor=(0.5, -0.35),
         ncol=1,
         frameon=False,
-        fontsize=10
+        fontsize=9
     )
 
     ax.axis('equal')
