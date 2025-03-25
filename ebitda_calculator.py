@@ -6,21 +6,28 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-# Streamlit styling
 st.markdown("""
 <style>
-/* Improve placeholder visibility */
-input::placeholder {
-    color: #333333 !important;
-    font-size: 16px !important;
-    opacity: 1 !important;
+.centered-image {
+    display: flex;
+    justify-content: center;
+}
+input[type=number], input[type=text] {
+    text-align: right;
 }
 
-/* Optional: make input text more readable */
-input[type=text], input[type=number] {
-    font-size: 16px !important;
-    font-weight: 500 !important;
-    color: #111111 !important;
+/* Improve input labels */
+label {
+    color: #000000 !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+}
+
+/* Optional - compact layout */
+section.main > div { padding-top: 0rem; padding-bottom: 0rem; }
+h1, h2, h3, h4 {
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
 }
 </style>
 """, unsafe_allow_html=True)
