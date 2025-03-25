@@ -98,7 +98,7 @@ else:
     labels = ["Total Operating Expense", "EBITDA"]
     colors = ['#2E86AB', '#F5B041']
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(3, 3))
     wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
