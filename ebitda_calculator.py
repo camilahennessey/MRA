@@ -109,8 +109,8 @@ else:
         textprops=dict(color="black", fontsize=12),
     )
 
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=28, fontweight='bold', color='black')
-    ax.set_title("EBITDA Margin", fontsize=20, fontweight='bold', pad=20)
+    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
+    ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold', pad=20)
 
     legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
     patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
