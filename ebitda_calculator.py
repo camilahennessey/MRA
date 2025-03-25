@@ -180,12 +180,28 @@ def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-    pdf.setFont("Helvetica", 12)
+
+    # Title
+    pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(100, height - 50, "MRA EBITDA Valuation Report")
-    y_position = height - 100
+
+    y_position = height - 90
+
+    # Draw each line
     for metric, value in zip(data["Metric"], data["Value"]):
-        pdf.drawString(100, y_position, f"{metric}: {value}")
+        # Section headers in bold
+        if "Name" in metric or "Owner" in metric or "Valuation Base" in metric:
+            pdf.setFont("Helvetica-Bold", 12)
+        else:
+            pdf.setFont("Helvetica", 12)
+
+        pdf.drawString(80, y_position, f"{metric}: {value}")
         y_position -= 20
+
+        # Add extra spacing after major sections
+        if "Margin" in metric or "Total Owner Benefit" in metric or "High Multiple" in metric:
+            y_position -= 10
+
     pdf.save()
     buffer.seek(0)
     return buffer
