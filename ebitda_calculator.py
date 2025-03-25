@@ -9,17 +9,18 @@ from reportlab.pdfgen import canvas
 # Streamlit styling
 st.markdown("""
 <style>
-.centered-image {
-    display: flex;
-    justify-content: center;
+/* Improve placeholder visibility */
+input::placeholder {
+    color: #333333 !important;
+    font-size: 16px !important;
+    opacity: 1 !important;
 }
-input[type=number], input[type=text] {
-    text-align: right;
-}
-section.main > div { padding-top: 0rem; padding-bottom: 0rem; }
-h1, h2, h3, h4 {
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem;
+
+/* Optional: make input text more readable */
+input[type=text], input[type=number] {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #111111 !important;
 }
 </style>
 """, unsafe_allow_html=True)
