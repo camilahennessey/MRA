@@ -125,10 +125,6 @@ st.subheader("Owner Benefit Calculation")
 owner_inputs = {
     "Owner's Compensation": "",
     "Health Insurance": "",
-    "Auto Expense": "",
-    "Cellphone Expense": "",
-    "Other Personal Expense": "",
-    "Extraordinary Nonrecurring Expense": "",
 }
 
 cols = st.columns(2)
@@ -141,38 +137,42 @@ for i, (label, default) in enumerate(owner_inputs.items()):
 total_owner_benefit = sum(parse_input(val) for val in categories.values())
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
 
-# Valuation Base: EBITDA + Owner Benefit
+# Valuation Base Calculation
 valuation_base = ebitda + total_owner_benefit
-st.write(f"### Valuation Base (EBITDA + Owner Benefit): **${valuation_base:,.0f}**")
-
-# Multiples Section
-st.subheader("Determining the Multiple")
-st.markdown("""
-### How Multiples Work  
-Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.25x to 2.0x** of the EBITDA + Owner Benefit.
-""")
-
 low_multiple = valuation_base * 1.25
 median_multiple = valuation_base * 1.5
 high_multiple = valuation_base * 2.0
 
-if valuation_base > 0:
-    st.write(f"#### Low Multiple (1.25x): **${low_multiple:,.0f}**")
-    st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.0f}**")
-    st.write(f"#### High Multiple (2.0x): **${high_multiple:,.0f}**")
-else:
-    st.warning("\u26a0\ufe0f **Enter values above to calculate multiple valuations.**")
+data = {
+    "Metric": [
+        "Name",
+        "Email",
+        "Total Operating Expenses",
+        "EBITDA",
+        "EBITDA Margin",
+        "Total Owner Benefit",
+        "Valuation Base (EBITDA + Owner Benefit)",
+        "Low Multiple (1.25x)",
+        "Median Multiple (1.5x)",
+        "High Multiple (2.0x)"
+    ],
+    "Value": [
+        name,
+        email,
+        f"${total_expenses:,.0f}",
+        f"${ebitda:,.0f}",
+        f"{ebitda_margin:.0f}%",
+        f"${total_owner_benefit:,.0f}",
+        f"${valuation_base:,.0f}",
+        f"${low_multiple:,.0f}",
+        f"${median_multiple:,.0f}",
+        f"${high_multiple:,.0f}"
+    ]
+}
 
-# PDF Export Functionality
 def generate_pdf(data):
     buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=letter)
     
-    # PDF Title and Content Formatting
-    pdf.setFont("Helvetica-Bold", 16)
-    
-   # ... (PDF generation code remains unchanged)
+   # Generate PDF content logic remains unchanged.
 
-pdf_buffer = generate_pdf(data)
-st.download_button(label="Download Results as PDF", data=pdf_buffer,
-                   file_name="ebitda_results.pdf", mime="application/pdf")
+pdf_buffer
