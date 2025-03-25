@@ -124,9 +124,119 @@ else:
 st.subheader("Owner Benefit Calculation")
 owner_inputs = {
     "Owner's Compensation": "",
+    "Health Insurance": "",
+    "Auto Expense": "",
+    "Cellphone Expense": "",
+    "Other Personal Expense": "",
+    "Extraordinary Nonrecurring Expense": "",
+    "Receipts for Owner Purchases": "",
+    "Depreciation and Amortization": "",
+    "Interest on Loan Payments": "",
+    "Travel and Entertainment": "",
+    "Donations": "",
+    "Other 1": "",
+    "Other 2": "",
+    "Other 3": ""
 }
 
 cols = st.columns(2)
 categories = {}
 for i, (label, default) in enumerate(owner_inputs.items()):
+    with cols[i % 2]:
+        st.markdown(f'<p style="font-size: 16px; font-weight: bold;">{label} ($)</p>', unsafe_allow_html=True)
+        categories[label] = st.text_input(f"{label} ($)", value=default, label_visibility="collapsed")
 
+total_owner_benefit = sum(parse_input(val) for val in categories.values())
+st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
+
+# Valuation Base: EBITDA + Owner Benefit
+valuation_base = ebitda + total_owner_benefit
+st.write(f"### Valuation Base (EBITDA + Owner Benefit): **${valuation_base:,.0f}**")
+
+# Multiples Section
+st.subheader("Determining the Multiple")
+st.markdown("""
+### How Multiples Work  
+Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.25x to 2.0x** of the EBITDA + Owner Benefit.
+""")
+
+low_multiple = valuation_base * 1.25
+median_multiple = valuation_base * 1.5
+high_multiple = valuation_base * 2.0
+
+if valuation_base > 0:
+    st.write(f"#### Low Multiple (1.25x): **${low_multiple:,.0f}**")
+    st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.0f}**")
+    st.write(f"#### High Multiple (2.0x): **${high_multiple:,.0f}**")
+else:
+    st.warning("\u26a0\ufe0f **Enter values above to calculate multiple valuations.**")
+
+# PDF Export
+st.subheader("Export Results")
+
+# Define data dictionary for PDF generation
+data = {
+    "Metric": [
+        "Name",
+        "Email",
+        "Total Operating Expenses",
+        "EBITDA",
+        "EBITDA Margin",
+        "Total Owner Benefit",
+        "Valuation Base (EBITDA + Owner Benefit)",
+        "Low Multiple (1.25x)",
+        "Median Multiple (1.5x)",
+        "High Multiple (2.0x)"
+    ],
+    "Value": [
+        name,
+        email,
+        f"${total_expenses:,.0f}",
+        f"${ebitda:,.0f}",
+        f"{ebitda_margin:.0f}%",
+        f"${total_owner_benefit:,.0f}",
+        f"${valuation_base:,.0f}",
+        f"${low_multiple:,.0f}",
+        f"${median_multiple:,.0f}",
+        f"${high_multiple:,.0f}"
+    ]
+}
+
+def generate_pdf(data):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # Title
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(100, height - 50, "MRA EBITDA Valuation Report")
+
+    y_position = height - 90
+
+    # Draw each line
+    for metric, value in zip(data["Metric"], data["Value"]):
+        # Section headers in bold
+        if "Name" in metric or "Owner" in metric or "Valuation Base" in metric:
+            pdf.setFont("Helvetica-Bold", 12)
+        else:
+            pdf.setFont("Helvetica", 12)
+
+        pdf.drawString(80, y_position, f"{metric}: {value}")
+        y_position -= 20
+
+        # Add extra spacing after major sections
+        if "Margin" in metric or "Total Owner Benefit" in metric or "High Multiple" in metric:
+            y_position -= 10
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+# Generate PDF and provide download button
+pdf_buffer = generate_pdf(data)
+st.download_button(
+    label="Download Results as PDF",
+    data=pdf_buffer,
+    file_name="ebitda_results.pdf",
+    mime="application/pdf"
+)
