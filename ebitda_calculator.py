@@ -8,25 +8,21 @@ from reportlab.pdfgen import canvas
 
 st.markdown("""
 <style>
-.centered-image {
-    display: flex;
-    justify-content: center;
+/* Better visibility for input labels */
+label {
+    font-size: 20px !important;
+    color: #31333F !important;
+    font-weight: 700 !important;
 }
 
-/* BOX STYLING FOR INPUTS */
+/* Field boxes for inputs */
 input[type=text], input[type=number] {
     text-align: right;
     border: 2px solid #d3d3d3 !important;
     border-radius: 6px !important;
     padding: 10px !important;
     font-size: 16px !important;
-}
-
-/* LABEL STYLE TO MATCH SUBHEADERS */
-.css-1cpxqw2 {
-    color: #31333F !important;
-    font-size: 20px !important;
-    font-weight: 700 !important;
+    color: #000000 !important;
 }
 </style>
 """, unsafe_allow_html=True)
