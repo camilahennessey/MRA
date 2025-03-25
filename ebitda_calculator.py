@@ -99,28 +99,40 @@ else:
     labels = ["Total Operating Expense", "EBITDA"]
     colors = ['#2E86AB', '#F5B041']
 
-    # Create the figure
-    fig, ax = plt.subplots(figsize=(6, 6))
+    # Create a smaller figure
+    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Reduced from (6, 6)
 
     wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
         colors=colors,
-        autopct=make_autopct(values),  # FIXED AUTOPCT FUNCTION
+        autopct=make_autopct(values),
         startangle=90,
         wedgeprops=dict(width=0.4, edgecolor='white'),
-        textprops=dict(color="black", fontsize=10),
+        textprops=dict(color="black", fontsize=9)  # Smaller text
     )
 
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center',
-            fontsize=24, fontweight='bold', color='black')
+    # Center text
+    ax.text(
+        0, 0, f"{ebitda_margin:.0f}%",
+        ha='center', va='center',
+        fontsize=14, fontweight='bold', color='black'
+    )
 
-    ax.set_title("EBITDA Margin", fontsize=18, fontweight='bold', pad=20)
+    ax.set_title("EBITDA Margin", fontsize=13, fontweight='bold', pad=15)
 
+    # Custom legend
     legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
     patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
-    ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.2),
-              ncol=1, frameon=False, fontsize=11)
+
+    ax.legend(
+        handles=patches,
+        loc='lower center',
+        bbox_to_anchor=(0.5, -0.3),  # Move legend lower to match smaller chart
+        ncol=1,
+        frameon=False,
+        fontsize=10
+    )
 
     ax.axis('equal')
     plt.tight_layout()
