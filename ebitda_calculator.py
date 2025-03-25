@@ -141,6 +141,14 @@ else:
 
 # Owner Benefit inputs
 st.subheader("Owner Benefit Calculation")
+
+st.markdown("""
+<div style='background-color:#fff3cd; padding:10px; border-left:6px solid #ffa502; border-radius:5px;'>
+<strong>⚠️ Important:</strong> Owner income and owner expenses must be included in the expense/labor categories above. 
+Please do not double-count them here.
+</div>
+""", unsafe_allow_html=True)
+
 owner_inputs = {
     "Owner's Compensation": "",
     "Health Insurance": "",
