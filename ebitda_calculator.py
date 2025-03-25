@@ -18,10 +18,11 @@ input[type=number], input[type=text] {
 
 /* Improve input labels */
 label {
-    color: #000000 !important;
-    font-size: 17px !important;
-    font-weight: 500 !important;
+    color: #31333F !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
 }
+
 
 /* Optional - compact layout */
 section.main > div { padding-top: 0rem; padding-bottom: 0rem; }
