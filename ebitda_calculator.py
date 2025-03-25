@@ -12,23 +12,21 @@ st.markdown("""
     display: flex;
     justify-content: center;
 }
-input[type=number], input[type=text] {
+
+/* BOX STYLING FOR INPUTS */
+input[type=text], input[type=number] {
     text-align: right;
+    border: 2px solid #d3d3d3 !important;
+    border-radius: 6px !important;
+    padding: 10px !important;
+    font-size: 16px !important;
 }
 
-/* Improve input labels */
-label {
+/* LABEL STYLE TO MATCH SUBHEADERS */
+.css-1cpxqw2 {
     color: #31333F !important;
     font-size: 20px !important;
     font-weight: 700 !important;
-}
-
-
-/* Optional - compact layout */
-section.main > div { padding-top: 0rem; padding-bottom: 0rem; }
-h1, h2, h3, h4 {
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem;
 }
 </style>
 """, unsafe_allow_html=True)
