@@ -16,6 +16,11 @@ st.markdown("""
 input[type=number], input[type=text] {
     text-align: right;
 }
+section.main > div { padding-top: 0rem; padding-bottom: 0rem; }
+h1, h2, h3, h4 {
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -26,19 +31,12 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Title and inputs
 st.title("MRA EBITDA Valuation Calculator")
-name = st.text_input("Enter Your Name")
-email = st.text_input("Enter Your Email")
-
-st.markdown("""
-### What is EBITDA?  
-EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization) is a key financial metric used to analyze a restaurant's operational performance.  
-It provides a holistic view of business profitability before accounting for non-operating expenses.
-
-### Why is EBITDA Important?  
-- Helps compare operational profitability across businesses.  
-- Excludes tax and financing decisions to show core earnings.  
-- Useful for investors evaluating a restaurant’s financial health.
-""")
+st.markdown("### Your Info")
+col1, col2 = st.columns([1, 1])
+with col1:
+    name = st.text_input("Name")
+with col2:
+    email = st.text_input("Email")
 
 # Helper for comma input parsing
 def parse_input(input_str):
@@ -56,11 +54,15 @@ def make_autopct(values):
     return autopct
 
 # Financial inputs
-st.subheader("Enter Financial Information")
-net_sales_str = st.text_input("Net Sales ($)", value="0")
-cogs_str = st.text_input("Cost of Goods Sold (COGS) ($)", value="0")
-employee_cost_str = st.text_input("Employee Cost ($)", value="0")
-other_operating_cost_str = st.text_input("Other Operating Cost ($)", value="0")
+st.markdown("---")
+st.subheader("Financial Information")
+col1, col2 = st.columns([1, 1])
+with col1:
+    net_sales_str = st.text_input("Net Sales ($)", value="")
+    cogs_str = st.text_input("COGS ($)", value="")
+with col2:
+    employee_cost_str = st.text_input("Employee Cost ($)", value="")
+    other_operating_cost_str = st.text_input("Other Operating Cost ($)", value="")
 
 net_sales = parse_input(net_sales_str)
 cogs = parse_input(cogs_str)
@@ -81,39 +83,33 @@ st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
 # Donut Chart Visualization
 if total_expenses == 0 and ebitda == 0:
-    st.write("⚠️ **Enter values above to generate the pie chart.**")
+    st.write("\u26a0\ufe0f **Enter values above to generate the pie chart.**")
 elif ebitda < 0:
-    st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
+    st.error("\u26a0\ufe0f **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
 
-    # Data for chart
     values = [total_expenses, ebitda]
     labels = ["Total Operating Expense", "EBITDA"]
     colors = ['#2E86AB', '#F5B041']
 
-    # Create the figure
     fig, ax = plt.subplots(figsize=(6, 6))
-
     wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
         colors=colors,
-        autopct=make_autopct(values),  # FIXED AUTOPCT FUNCTION
+        autopct=make_autopct(values),
         startangle=90,
         wedgeprops=dict(width=0.4, edgecolor='white'),
         textprops=dict(color="black", fontsize=10),
     )
 
-    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center',
-            fontsize=24, fontweight='bold', color='black')
-
+    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center', fontsize=24, fontweight='bold', color='black')
     ax.set_title("EBITDA Margin", fontsize=18, fontweight='bold', pad=20)
 
     legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
     patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
-    ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.2),
-              ncol=1, frameon=False, fontsize=11)
+    ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.2), ncol=1, frameon=False, fontsize=11)
 
     ax.axis('equal')
     plt.tight_layout()
@@ -121,22 +117,28 @@ else:
 
 # Owner Benefit inputs
 st.subheader("Owner Benefit Calculation")
-categories = {
-    "Owner’s Compensation": st.text_input("Owner’s Compensation ($)", value="0"),
-    "Health Insurance": st.text_input("Health Insurance ($)", value="0"),
-    "Auto Expense": st.text_input("Auto Expense ($)", value="0"),
-    "Cellphone Expense": st.text_input("Cellphone Expense ($)", value="0"),
-    "Other Personal Expense": st.text_input("Other Personal Expense ($)", value="0"),
-    "Extraordinary Nonrecurring Expense": st.text_input("Extraordinary Nonrecurring Expense ($)", value="0"),
-    "Receipts for Owner Purchases": st.text_input("Receipts for Owner Purchases ($)", value="0"),
-    "Depreciation and Amortization": st.text_input("Depreciation and Amortization ($)", value="0"),
-    "Interest on Loan Payments": st.text_input("Interest on Loan Payments ($)", value="0"),
-    "Travel and Entertainment": st.text_input("Travel and Entertainment ($)", value="0"),
-    "Donations": st.text_input("Donations ($)", value="0"),
-    "Other 1": st.text_input("Other 1 ($)", value="0"),
-    "Other 2": st.text_input("Other 2 ($)", value="0"),
-    "Other 3": st.text_input("Other 3 ($)", value="0"),
+owner_inputs = {
+    "Owner’s Compensation": "",
+    "Health Insurance": "",
+    "Auto Expense": "",
+    "Cellphone Expense": "",
+    "Other Personal Expense": "",
+    "Extraordinary Nonrecurring Expense": "",
+    "Receipts for Owner Purchases": "",
+    "Depreciation and Amortization": "",
+    "Interest on Loan Payments": "",
+    "Travel and Entertainment": "",
+    "Donations": "",
+    "Other 1": "",
+    "Other 2": "",
+    "Other 3": ""
 }
+
+cols = st.columns(2)
+categories = {}
+for i, (label, default) in enumerate(owner_inputs.items()):
+    with cols[i % 2]:
+        categories[label] = st.text_input(f"{label} ($)", value=default)
 
 total_owner_benefit = sum(parse_input(val) for val in categories.values())
 st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
@@ -161,7 +163,7 @@ if valuation_base > 0:
     st.write(f"#### Median Multiple (1.5x): **${median_multiple:,.0f}**")
     st.write(f"#### High Multiple (2.0x): **${high_multiple:,.0f}**")
 else:
-    st.warning("⚠️ **Enter values above to calculate multiple valuations.**")
+    st.warning("\u26a0\ufe0f **Enter values above to calculate multiple valuations.**")
 
 # PDF Export
 st.subheader("Export Results")
