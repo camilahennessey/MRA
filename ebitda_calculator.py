@@ -88,56 +88,41 @@ st.write(f"### EBITDA Margin: **{ebitda_margin:.0f}%**")
 
 # Donut Chart Visualization
 if total_expenses == 0 and ebitda == 0:
-    st.warning("⚠️ Enter values above to generate the pie chart.")
+    st.write("⚠️ **Enter values above to generate the pie chart.**")
 elif ebitda < 0:
-    st.error("⚠️ EBITDA is negative. A pie chart cannot be generated.")
+    st.error("⚠️ **EBITDA is negative. A pie chart cannot be generated.**")
 else:
     st.subheader("EBITDA Margin Breakdown")
 
-    # Chart data
+    # Data for chart
     values = [total_expenses, ebitda]
     labels = ["Total Operating Expense", "EBITDA"]
-    colors = ['#2E86AB', '#F5B041']  # Blue and gold
+    colors = ['#2E86AB', '#F5B041']
 
-    # Create donut chart
-    fig, ax = plt.subplots(figsize=(3.5, 3.5))  # Adjusted to be clean but compact
+    # Create the figure
+    fig, ax = plt.subplots(figsize=(6, 6))
+
     wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
         colors=colors,
-        autopct=make_autopct(values),
+        autopct=make_autopct(values),  # FIXED AUTOPCT FUNCTION
         startangle=90,
         wedgeprops=dict(width=0.4, edgecolor='white'),
-        textprops=dict(color="black", fontsize=12)
+        textprops=dict(color="black", fontsize=10),
     )
 
-    # Center text (EBITDA margin)
-    ax.text(
-        0, 0,
-        f"{ebitda_margin:.0f}%",
-        ha='center',
-        va='center',
-        fontsize=14,
-        fontweight='bold',
-        color='black'
-    )
+    ax.text(0, 0, f"{ebitda_margin:.0f}%", ha='center', va='center',
+            fontsize=24, fontweight='bold', color='black')
 
-    # Title above chart
-    ax.set_title("EBITDA Margin", fontsize=14, fontweight='bold', pad=15)
+    ax.set_title("EBITDA Margin", fontsize=18, fontweight='bold', pad=20)
 
-    # Legend with values
     legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
     patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
-    ax.legend(
-        handles=patches,
-        loc='lower center',
-        bbox_to_anchor=(0.5, -0.25),
-        ncol=1,
-        frameon=False,
-        fontsize=11
-    )
+    ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.2),
+              ncol=1, frameon=False, fontsize=11)
 
-    ax.axis('equal')  # Keep it circular
+    ax.axis('equal')
     plt.tight_layout()
     st.pyplot(fig)
 
