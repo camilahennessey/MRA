@@ -10,7 +10,7 @@ st.markdown("""
 <style>
 /* Better visibility for input labels */
 label {
-    font-size: 20px !important;
+    font-size: 16px !important;
     color: #31333F !important;
     font-weight: 700 !important;
 }
@@ -23,6 +23,11 @@ input[type=text], input[type=number] {
     padding: 10px !important;
     font-size: 16px !important;
     color: #000000 !important;
+}
+
+/* Adjust other text elements for consistency */
+.stMarkdown, .stText {
+    font-size: 16px !important;
 }
 </style>
 """, unsafe_allow_html=True)
