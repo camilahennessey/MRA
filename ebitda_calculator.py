@@ -19,8 +19,8 @@ input[type=number], input[type=text] {
 /* Improve input labels */
 label {
     color: #000000 !important;
-    font-size: 20px !important;
-    font-weight: 600 !important;
+    font-size: 17px !important;
+    font-weight: 500 !important;
 }
 
 /* Optional - compact layout */
