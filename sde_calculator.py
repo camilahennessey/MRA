@@ -30,13 +30,6 @@ st.markdown('</div>', unsafe_allow_html=True)
 # Title and Info
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 st.markdown("### Your Info")
-st.markdown("""
-Seller Discretionary Earnings is a financial metric used to analyze the company’s operational performance in a given year/quarter. It provides a holistic idea of the company’s business at an operational level to every investor. It is also used as a level playing field to compare companies at an operational level and ascertain their operational profitability.
-
-It is the operating income (earnings) after subtracting it from the operational expenses. Operating income is the company’s revenues from business operations like sale of products/services. Operating expenses is the sum of the cost of goods sold, employee expenses, and other expenses such as admin, marketing, and sales expenses. This tells you the total earnings of a company at the operating level.
-
-Earnings margin is an indicative feature of the company’s overall health. However, to get the Earnings margin of a company—you need to know its net profit/loss first. Based on the Seller Discretionary Earnings margin of a company, one can decide whether it is a worthy investment.
-""")
 
 col1, col2 = st.columns([1, 1])
 with col1:
@@ -45,6 +38,14 @@ with col1:
 with col2:
     st.markdown('<p style="font-size: 16px; font-weight: bold;">Email</p>', unsafe_allow_html=True)
     email = st.text_input("Email", label_visibility="collapsed")
+
+st.markdown("""
+Seller Discretionary Earnings is a financial metric used to analyze the company’s operational performance in a given year/quarter. It provides a holistic idea of the company’s business at an operational level to every investor. It is also used as a level playing field to compare companies at an operational level and ascertain their operational profitability.
+
+It is the operating income (earnings) after subtracting it from the operational expenses. Operating income is the company’s revenues from business operations like sale of products/services. Operating expenses is the sum of the cost of goods sold, employee expenses, and other expenses such as admin, marketing, and sales expenses. This tells you the total earnings of a company at the operating level.
+
+Earnings margin is an indicative feature of the company’s overall health. However, to get the Earnings margin of a company—you need to know its net profit/loss first. Based on the Seller Discretionary Earnings margin of a company, one can decide whether it is a worthy investment.
+""")
 
 # Helpers
 def parse_input(input_str):
