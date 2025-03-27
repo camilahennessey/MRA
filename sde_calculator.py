@@ -176,6 +176,7 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
+# ✅ Multiples from SDE only (not Net Profit)
 low_val = round(sde * 1.5)
 med_val = round(sde * 2.0)
 high_val = round(sde * 2.5)
