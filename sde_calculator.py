@@ -88,7 +88,7 @@ sde_margin = (sde / income) * 100 if income > 0 else 0
 
 st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
 st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f}**")
-st.markdown(f"### Earnings Margin:{sde_margin:.0f}%")
+st.markdown(f"### Earnings Margin: {sde_margin:.0f}%")
 
 # Donut Chart
 if income == 0:
