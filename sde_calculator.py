@@ -146,8 +146,8 @@ owner_inputs = {
     "Donations": "",
     "Rent Adjustment to $33k/year": "",
     "Other – Salary Adjustment 2nd Owner": "",
-    "Other 1": "",
-    "Other 2": ""
+    "Other": "",
+    "Other (2)": "",
 }
 
 cols = st.columns(2)
@@ -157,14 +157,15 @@ for i, (label, default) in enumerate(owner_inputs.items()):
         st.markdown(f'<p style="font-size: 16px; font-weight: bold;">{label} ($)</p>', unsafe_allow_html=True)
         adjustments[label] = st.text_input(label, value=default, label_visibility="collapsed")
 
-total_adjustments = sum(parse_input(val) for val in adjustments.values())
-adjusted_sde = sde + total_adjustments
+total_owner_benefit = sum(parse_input(val) for val in adjustments.values())
+net_profit_loss = sde + total_owner_benefit
+total_income_valuation = net_profit_loss
 
-st.write(f"### Total Owner Benefit: **${total_adjustments:,.0f}**")
-st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
-st.write(f"### Total Income Valuation: **${adjusted_sde:,.0f}**")
+st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
+st.write(f"### Net Profit/Loss: **${net_profit_loss:,.0f}**")
+st.write(f"### Total Income Valuation: **${total_income_valuation:,.0f}**")
 
-# Multiples
+# --- Multiples Section ---
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -172,9 +173,9 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-low_val = adjusted_sde * 1.5
-med_val = adjusted_sde * 2.0
-high_val = adjusted_sde * 2.5
+low_val = total_income_valuation * 1.5
+med_val = total_income_valuation * 2.0
+high_val = total_income_valuation * 2.5
 
 st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
