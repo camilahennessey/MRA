@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from io import BytesIO
@@ -22,11 +21,11 @@ input[type=text], input[type=number] {
 </style>
 """, unsafe_allow_html=True)
 
-# Logo
+# Logo and Title
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
-
-# Title and Info
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
+
+# User Info
 st.markdown("### Your Info")
 col1, col2 = st.columns([1, 1])
 with col1:
@@ -41,7 +40,7 @@ Seller Discretionary Earnings (SDE) represents a business’s operating income b
 </div>
 """, unsafe_allow_html=True)
 
-# Helpers
+# Helper
 def parse_input(input_str):
     try:
         return float(input_str.replace(",", "").replace("(", "-").replace(")", ""))
@@ -51,14 +50,13 @@ def parse_input(input_str):
 # Financial Inputs
 st.markdown("---")
 st.subheader("Financial Information")
-
 col1, col2 = st.columns(2)
 with col1:
-    income_str = st.text_input("Food & Beverage Income ($)", value="")
-    purchases_str = st.text_input("F&B Purchases ($)", value="")
+    income_str = st.text_input("Food & Beverage Income ($)")
+    purchases_str = st.text_input("F&B Purchases ($)")
 with col2:
-    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)", value="")
-    operating_str = st.text_input("Operating Expenses ($)", value="")
+    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)")
+    operating_str = st.text_input("Operating Expenses ($)")
 
 income = parse_input(income_str)
 purchases = parse_input(purchases_str)
@@ -94,7 +92,7 @@ if income > 0 and sde >= 0:
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# Adjustments
+# Adjustments Section
 st.markdown("---")
 st.subheader("Adjustments to Seller Discretionary Earnings")
 
@@ -114,15 +112,14 @@ for i, label in enumerate(adjustment_fields):
 
 total_adjustments = sum(parse_input(v) for v in adjustments.values())
 owner_benefit_display = f"(${total_adjustments:,.0f})" if total_adjustments > 0 else f"${total_adjustments:,.0f}"
-
 st.write(f"### Total Owner Benefit: **{owner_benefit_display}**")
 
-# Net Profit/Loss = SDE + Owner Benefit
+# Net Profit = SDE + Adjustments
 net_profit = round(sde + total_adjustments)
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# ✅ Determining the Multiple (using SDE)
+# ✅ Determining the Multiple
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -130,7 +127,7 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Correct values from SDE
+# ✅ FINAL CORRECT MULTIPLE CALCULATION — based on SDE only
 low_val = round(sde * 1.5)
 med_val = round(sde * 2.0)
 high_val = round(sde * 2.5)
