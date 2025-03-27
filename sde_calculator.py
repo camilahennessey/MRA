@@ -168,7 +168,7 @@ adjusted_sde = round(sde + total_adjustments)
 st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# ✅ Final FIX: Round each multiple
+# ✅ Corrected Multiples Section using SDE
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -176,7 +176,7 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Multiples from SDE only (not Net Profit)
+# 🚨 DO NOT use adjusted_sde here
 low_val = round(sde * 1.5)
 med_val = round(sde * 2.0)
 high_val = round(sde * 2.5)
