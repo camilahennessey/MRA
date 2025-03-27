@@ -123,9 +123,10 @@ else:
     plt.tight_layout()
     st.pyplot(fig)
 
-# Adjustments
+# Adjustments Section
 st.markdown("---")
 st.subheader("Adjustments to Seller Discretionary Earnings")
+
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
 <strong>Operating Expense on your P+L to include:</strong> Advertising, Auto Allowance, Bank Fees, Condo Fees, Credit Card Fees, Depreciation, Dues & Subscriptions, Insurance, Interest, Legal & Professional Fees, Licenses, Off Expense and Postage, Outside Services, Owner Compensation, Printing, Rents, Repairs and Maintenance, Restaurant Supplies, Telephone, Utilities.
@@ -147,7 +148,7 @@ owner_inputs = {
     "Rent Adjustment to $33k/year": "",
     "Other – Salary Adjustment 2nd Owner": "",
     "Other": "",
-    "Other (2)": "",
+    "Other (Additional)": "",
 }
 
 cols = st.columns(2)
@@ -157,15 +158,15 @@ for i, (label, default) in enumerate(owner_inputs.items()):
         st.markdown(f'<p style="font-size: 16px; font-weight: bold;">{label} ($)</p>', unsafe_allow_html=True)
         adjustments[label] = st.text_input(label, value=default, label_visibility="collapsed")
 
-total_owner_benefit = sum(parse_input(val) for val in adjustments.values())
-net_profit_loss = sde + total_owner_benefit
-total_income_valuation = net_profit_loss
+total_adjustments = sum(parse_input(val) for val in adjustments.values())
+st.write(f"### Total Owner Benefit: **${total_adjustments:,.0f}**")
 
-st.write(f"### Total Owner Benefit: **${total_owner_benefit:,.0f}**")
-st.write(f"### Net Profit/Loss: **${net_profit_loss:,.0f}**")
-st.write(f"### Total Income Valuation: **${total_income_valuation:,.0f}**")
+adjusted_sde = sde + total_adjustments
 
-# --- Multiples Section ---
+st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
+st.write(f"### Total Income Valuation: **${adjusted_sde:,.0f}**")
+
+# Multiples Section
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -173,10 +174,54 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-low_val = total_income_valuation * 1.5
-med_val = total_income_valuation * 2.0
-high_val = total_income_valuation * 2.5
+low_val = adjusted_sde * 1.5
+med_val = adjusted_sde * 2.0
+high_val = adjusted_sde * 2.5
 
 st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
 st.write(f"#### High Multiple Valuation (2.5x): **${high_val:,.0f}**")
+
+# PDF Export
+st.subheader("Export Results")
+
+data = {
+    "Metric": [
+        "Name", "Email", "F&B Income", "Purchases", "Labor", "Operating Expenses",
+        "Total Expenses", "SDE", "SDE Margin", "Total Owner Benefit", "Net Profit/Loss", "Total Income Valuation",
+        "Low Multiple Valuation (1.5x)", "Median Multiple Valuation (2.0x)", "High Multiple Valuation (2.5x)"
+    ],
+    "Value": [
+        name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
+        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", f"${total_adjustments:,.0f}",
+        f"${adjusted_sde:,.0f}", f"${adjusted_sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
+    ]
+}
+
+def generate_pdf(data):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(100, height - 50, "MRA SDE Valuation Report")
+    y_position = height - 90
+
+    for metric, value in zip(data["Metric"], data["Value"]):
+        pdf.setFont("Helvetica-Bold" if "SDE" in metric or "Name" in metric else "Helvetica", 12)
+        pdf.drawString(80, y_position, f"{metric}: {value}")
+        y_position -= 20
+        if "Adjusted SDE" in metric:
+            y_position -= 10
+
+    pdf.save()
+    buffer.seek(0)
+    return buffer
+
+pdf_buffer = generate_pdf(data)
+st.download_button(
+    label="Download Results as PDF",
+    data=pdf_buffer,
+    file_name="sde_results.pdf",
+    mime="application/pdf"
+)
