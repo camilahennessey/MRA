@@ -38,6 +38,17 @@ with col2:
     st.markdown('<p style="font-size: 16px; font-weight: bold;">Email</p>', unsafe_allow_html=True)
     email = st.text_input("Email", label_visibility="collapsed")
 
+# Description block under "Your Info"
+st.markdown("""
+<div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
+Seller Discretionary Earnings is a financial metric used to analyze the company’s operational performance in a given year/quarter. It provides a holistic idea of the company’s business at an operational level to every investor. It is also used as a level playing field to compare companies at an operational level and ascertain their operational profitability.  
+<br><br>
+It is the operating income (earnings) after subtracting it from the operational expenses. Operating income is the company’s revenues from business operations like sale of products/services. Operating expenses is the sum of the cost of goods sold, employee expenses, and, other expenses such as admin, marketing, and sales expenses. This tells you the total earnings of a company at the operating level.  
+<br><br>
+Earnings margin is an indicative feature of the company’s overall health. However, to get the Earnings margin of a company—you need to know its net/profit/loss first. Based on the Seller Discretionary Earnings margin of a company, one can decide whether it is a worthy investment.
+</div>
+""", unsafe_allow_html=True)
+
 # Helpers
 def parse_input(input_str):
     try:
@@ -75,9 +86,10 @@ operating = parse_input(operating_str)
 
 total_expenses = purchases + labor + operating
 sde = income - total_expenses
+sde_margin = (sde / income * 100) if income > 0 else 0
 
 st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
-st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f}**")
+st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f} ({sde_margin:.0f}%)**")
 
 # Donut Chart
 if income == 0:
@@ -102,7 +114,7 @@ else:
         textprops=dict(color="black", fontsize=8)
     )
 
-    ax.text(0, 0, f"{round((sde / income) * 100) if income > 0 else 0}%", ha='center', va='center',
+    ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center',
             fontsize=12, fontweight='bold', color='black')
 
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold', pad=10)
@@ -160,11 +172,11 @@ st.subheader("Export Results")
 data = {
     "Metric": [
         "Name", "Email", "F&B Income", "Purchases", "Labor", "Operating Expenses",
-        "Total Expenses", "SDE", "Total Adjustments", "Adjusted SDE"
+        "Total Expenses", "SDE", "SDE Margin", "Total Adjustments", "Adjusted SDE"
     ],
     "Value": [
         name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
-        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"${total_adjustments:,.0f}", f"${adjusted_sde:,.0f}"
+        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", f"${total_adjustments:,.0f}", f"${adjusted_sde:,.0f}"
     ]
 }
 
