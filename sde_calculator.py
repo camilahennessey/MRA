@@ -159,13 +159,14 @@ for i, (label, default) in enumerate(owner_inputs.items()):
         adjustments[label] = st.text_input(label, value=default, label_visibility="collapsed")
 
 total_adjustments = sum(parse_input(val) for val in adjustments.values())
-st.write(f"### Total Owner Benefit: **${-total_adjustments:,.0f}**")
+owner_benefit_display = f"(${total_adjustments:,.0f})" if total_adjustments > 0 else f"${total_adjustments:,.0f}"
+st.write(f"### Total Owner Benefit: **{owner_benefit_display}**")
 
-# ✅ Corrected Net Profit/Loss formula
-adjusted_sde = round(sde - total_adjustments)
+# ✅ Correct logic: Net Profit = SDE + Owner Benefit
+adjusted_sde = round(sde + total_adjustments)
 
 st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
-st.write(f"### Total Income Valuation: **${adjusted_sde:,.0f}**")
+st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
 # Multiples Section
 st.subheader("Determining the Multiple")
@@ -175,9 +176,9 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-low_val = adjusted_sde * 1.5
-med_val = adjusted_sde * 2.0
-high_val = adjusted_sde * 2.5
+low_val = sde * 1.5
+med_val = sde * 2.0
+high_val = sde * 2.5
 
 st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
@@ -194,8 +195,8 @@ data = {
     ],
     "Value": [
         name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
-        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", f"${-total_adjustments:,.0f}",
-        f"${adjusted_sde:,.0f}", f"${adjusted_sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
+        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", owner_benefit_display,
+        f"${adjusted_sde:,.0f}", f"${sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
     ]
 }
 
