@@ -67,15 +67,11 @@ st.subheader("Financial Information")
 
 col1, col2 = st.columns(2)
 with col1:
-    st.markdown('<p style="font-size: 16px; font-weight: bold;">Food & Beverage Income ($)</p>', unsafe_allow_html=True)
-    income_str = st.text_input("Income", value="", label_visibility="collapsed")
-    st.markdown('<p style="font-size: 16px; font-weight: bold;">F&B Purchases ($)</p>', unsafe_allow_html=True)
-    purchases_str = st.text_input("Purchases", value="", label_visibility="collapsed")
+    income_str = st.text_input("Food & Beverage Income ($)", value="")
+    purchases_str = st.text_input("F&B Purchases ($)", value="")
 with col2:
-    st.markdown('<p style="font-size: 16px; font-weight: bold;">Salaries, Wages, Taxes & Benefits ($)</p>', unsafe_allow_html=True)
-    labor_str = st.text_input("Labor", value="", label_visibility="collapsed")
-    st.markdown('<p style="font-size: 16px; font-weight: bold;">Operating Expenses ($)</p>', unsafe_allow_html=True)
-    operating_str = st.text_input("Operating", value="", label_visibility="collapsed")
+    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)", value="")
+    operating_str = st.text_input("Operating Expenses ($)", value="")
 
 income = parse_input(income_str)
 purchases = parse_input(purchases_str)
@@ -97,28 +93,16 @@ elif sde < 0:
     st.error("⚠️ SDE is negative. A pie chart cannot be generated.")
 else:
     st.subheader("SDE Breakdown")
-
     values = [total_expenses, sde]
     labels = ["Total Expenses", "SDE"]
     colors = ['#2E86AB', '#F5B041']
-
     fig, ax = plt.subplots(figsize=(2.8, 2.8))
-    wedges, texts, autotexts = ax.pie(
-        values,
-        labels=labels,
-        colors=colors,
-        autopct=make_autopct(values),
-        startangle=90,
-        wedgeprops=dict(width=0.35, edgecolor='white'),
-        textprops=dict(color="black", fontsize=8)
-    )
-
+    wedges, texts, autotexts = ax.pie(values, labels=labels, colors=colors, autopct=make_autopct(values), startangle=90, wedgeprops=dict(width=0.35, edgecolor='white'), textprops=dict(color="black", fontsize=8))
     ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=12, fontweight='bold', color='black')
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold', pad=10)
     legend_labels = [f"{labels[i]}: ${values[i]:,}" for i in range(len(labels))]
     patches = [mpatches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(labels))]
     ax.legend(handles=patches, loc='lower center', bbox_to_anchor=(0.5, -0.35), ncol=1, frameon=False, fontsize=9)
-
     ax.axis('equal')
     plt.tight_layout()
     st.pyplot(fig)
@@ -157,13 +141,14 @@ for i, (label, default) in enumerate(owner_inputs.items()):
         adjustments[label] = st.text_input(label, value=default, label_visibility="collapsed")
 
 total_adjustments = sum(parse_input(val) for val in adjustments.values())
-adjusted_sde = sde + total_adjustments
+net_profit = sde
+owner_benefit = total_adjustments
+total_income_valuation = net_profit + owner_benefit
 
-# --- Net Profit and Total Income Valuation ---
-st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
-st.write(f"### Total Income Valuation: **${adjusted_sde:,.0f}**")
+st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
+st.write(f"### Total Income Valuation: **${total_income_valuation:,.0f}**")
 
-# --- Multiples Section ---
+# Multiples
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -171,9 +156,9 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-low_val = adjusted_sde * 1.5
-med_val = adjusted_sde * 2.0
-high_val = adjusted_sde * 2.5
+low_val = total_income_valuation * 1.5
+med_val = total_income_valuation * 2.0
+high_val = total_income_valuation * 2.5
 
 st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
@@ -185,11 +170,11 @@ st.subheader("Export Results")
 data = {
     "Metric": [
         "Name", "Email", "F&B Income", "Purchases", "Labor", "Operating Expenses",
-        "Total Expenses", "SDE", "SDE Margin"
+        "Total Expenses", "SDE", "SDE Margin", "Net Profit/Loss", "Owner Benefit", "Total Income Valuation"
     ],
     "Value": [
         name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
-        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%"
+        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", f"${net_profit:,.0f}", f"${owner_benefit:,.0f}", f"${total_income_valuation:,.0f}"
     ]
 }
 
