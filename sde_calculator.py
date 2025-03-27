@@ -123,6 +123,62 @@ else:
     plt.tight_layout()
     st.pyplot(fig)
 
+# Adjustments
+st.markdown("---")
+st.subheader("Adjustments to Seller Discretionary Earnings")
+st.markdown("""
+<div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
+<strong>Operating Expense on your P+L to include:</strong> Advertising, Auto Allowance, Bank Fees, Condo Fees, Credit Card Fees, Depreciation, Dues & Subscriptions, Insurance, Interest, Legal & Professional Fees, Licenses, Off Expense and Postage, Outside Services, Owner Compensation, Printing, Rents, Repairs and Maintenance, Restaurant Supplies, Telephone, Utilities.
+</div>
+""", unsafe_allow_html=True)
+
+owner_inputs = {
+    "Owner's Compensation": "",
+    "Health Insurance": "",
+    "Auto Expense": "",
+    "Cellphone Expense": "",
+    "Other Personal Expense": "",
+    "Extraordinary Nonrecurring Expense": "",
+    "Receipts for Owner Purchases": "",
+    "Depreciation and Amortization": "",
+    "Interest on Loan Payments": "",
+    "Travel and Entertainment": "",
+    "Donations": "",
+    "Rent Adjustment to $33k/year": "",
+    "Other – Salary Adjustment 2nd Owner": "",
+    "Other": "",
+}
+
+cols = st.columns(2)
+adjustments = {}
+for i, (label, default) in enumerate(owner_inputs.items()):
+    with cols[i % 2]:
+        st.markdown(f'<p style="font-size: 16px; font-weight: bold;">{label} ($)</p>', unsafe_allow_html=True)
+        adjustments[label] = st.text_input(label, value=default, label_visibility="collapsed")
+
+total_adjustments = sum(parse_input(val) for val in adjustments.values())
+adjusted_sde = sde + total_adjustments
+
+# --- Net Profit and Total Income Valuation ---
+st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
+st.write(f"### Total Income Valuation: **${adjusted_sde:,.0f}**")
+
+# --- Multiples Section ---
+st.subheader("Determining the Multiple")
+st.markdown("""
+<div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
+Multiples vary by market, concept, geography, and a wide variety range of elements. Restaurant heading into season will sell at a higher multiple than out of season like those on the Cape or in resort towns. The characteristics that determine the multiple are: Quality of restaurant operations and administration, level of earnings, market saturation, number of units, seasonality, geography, location, comp sales, franchise, competition.
+</div>
+""", unsafe_allow_html=True)
+
+low_val = adjusted_sde * 1.5
+med_val = adjusted_sde * 2.0
+high_val = adjusted_sde * 2.5
+
+st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
+st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
+st.write(f"#### High Multiple Valuation (2.5x): **${high_val:,.0f}**")
+
 # PDF Export
 st.subheader("Export Results")
 
