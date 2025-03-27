@@ -83,7 +83,7 @@ labor = parse_input(labor_str)
 operating = parse_input(operating_str)
 
 total_expenses = purchases + labor + operating
-sde = income - total_expenses
+sde = round(income - total_expenses)
 sde_margin = (sde / income) * 100 if income > 0 else 0
 
 st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
@@ -162,13 +162,13 @@ total_adjustments = sum(parse_input(val) for val in adjustments.values())
 owner_benefit_display = f"(${total_adjustments:,.0f})" if total_adjustments > 0 else f"${total_adjustments:,.0f}"
 st.write(f"### Total Owner Benefit: **{owner_benefit_display}**")
 
-# ✅ Correct logic: Net Profit = SDE + Owner Benefit
+# ✅ Net Profit/Loss = SDE + Owner Benefit
 adjusted_sde = round(sde + total_adjustments)
 
 st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# Multiples Section
+# ✅ Multiples from SDE
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
