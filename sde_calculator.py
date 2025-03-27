@@ -159,9 +159,10 @@ for i, (label, default) in enumerate(owner_inputs.items()):
         adjustments[label] = st.text_input(label, value=default, label_visibility="collapsed")
 
 total_adjustments = sum(parse_input(val) for val in adjustments.values())
-st.write(f"### Total Owner Benefit: **${total_adjustments:,.0f}**")
+st.write(f"### Total Owner Benefit: **${-total_adjustments:,.0f}**")
 
-adjusted_sde = sde + total_adjustments
+# ✅ Corrected Net Profit/Loss formula
+adjusted_sde = round(sde - total_adjustments)
 
 st.write(f"### Net Profit/Loss: **${adjusted_sde:,.0f}**")
 st.write(f"### Total Income Valuation: **${adjusted_sde:,.0f}**")
@@ -193,7 +194,7 @@ data = {
     ],
     "Value": [
         name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
-        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", f"${total_adjustments:,.0f}",
+        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", f"${-total_adjustments:,.0f}",
         f"${adjusted_sde:,.0f}", f"${adjusted_sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
     ]
 }
