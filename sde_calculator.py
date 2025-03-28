@@ -21,12 +21,10 @@ input[type=text], input[type=number] {
 </style>
 """, unsafe_allow_html=True)
 
-# Logo and Title
+# Title and Info
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
-# User Info
-st.markdown("### Your Info")
 col1, col2 = st.columns([1, 1])
 with col1:
     name = st.text_input("Name")
@@ -47,6 +45,10 @@ def parse_input(input_str):
     except:
         return 0.0
 
+# Excel-style rounding
+def excel_round(x):
+    return int(x + 0.5)
+
 # Financial Inputs
 st.markdown("---")
 st.subheader("Financial Information")
@@ -64,7 +66,7 @@ labor = parse_input(labor_str)
 operating = parse_input(operating_str)
 
 total_expenses = purchases + labor + operating
-sde = round(income - total_expenses)
+sde = income - total_expenses
 sde_margin = (sde / income) * 100 if income > 0 else 0
 
 st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
@@ -115,7 +117,7 @@ owner_benefit_display = f"(${total_adjustments:,.0f})" if total_adjustments > 0 
 st.write(f"### Total Owner Benefit: **{owner_benefit_display}**")
 
 # Net Profit = SDE + Adjustments
-net_profit = round(sde + total_adjustments)
+net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
@@ -127,10 +129,10 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ FINAL CORRECT MULTIPLE CALCULATION — based on SDE only
-low_val = round(sde * 1.5)
-med_val = round(sde * 2.0)
-high_val = round(sde * 2.5)
+# ✅ FINAL FIX: Excel-style rounding for exact match
+low_val = excel_round(sde * 1.5)
+med_val = excel_round(sde * 2.0)
+high_val = excel_round(sde * 2.5)
 
 st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
