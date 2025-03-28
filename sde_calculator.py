@@ -21,7 +21,7 @@ input[type=text], input[type=number] {
 </style>
 """, unsafe_allow_html=True)
 
-# Title and Info
+# Header
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
@@ -38,14 +38,13 @@ Seller Discretionary Earnings (SDE) represents a business’s operating income b
 </div>
 """, unsafe_allow_html=True)
 
-# Helper
+# Helpers
 def parse_input(input_str):
     try:
         return float(input_str.replace(",", "").replace("(", "-").replace(")", ""))
     except:
         return 0.0
 
-# Excel-style rounding
 def excel_round(x):
     return int(x + 0.5)
 
@@ -94,7 +93,7 @@ if income > 0 and sde >= 0:
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# Adjustments Section
+# Adjustments
 st.markdown("---")
 st.subheader("Adjustments to Seller Discretionary Earnings")
 
@@ -121,7 +120,7 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# ✅ Determining the Multiple
+# ✅ Multiples Section — using SDE and Excel-style rounding
 st.subheader("Determining the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -129,7 +128,6 @@ Multiples vary by market, concept, geography, and a wide variety range of elemen
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ FINAL FIX: Excel-style rounding for exact match
 low_val = excel_round(sde * 1.5)
 med_val = excel_round(sde * 2.0)
 high_val = excel_round(sde * 2.5)
