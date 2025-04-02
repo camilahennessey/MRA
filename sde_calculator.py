@@ -121,10 +121,10 @@ st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
 # ✅ Multiples Section — FIXED to match Excel
-st.subheader("Determining the Multiple")
+st.subheader("What Drives the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
-Multiples vary by market, concept, geography, and a wide variety range of elements. Restaurants heading into season sell at higher multiples than those in off-season. Characteristics include: quality of operations, earnings level, location, competition, franchise status, and market saturation.
+There are many variables that can lessen or enhance the value of your business. The area in which you do business, competition or the lack of competition, seasonality, facility, and quality of operations all can have an impact on your valuation multiple.
 </div>
 """, unsafe_allow_html=True)
 
