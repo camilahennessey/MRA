@@ -8,6 +8,9 @@ import base64
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
 
 st.set_page_config(layout="wide")
 
@@ -29,6 +32,7 @@ input[type=text], input[type=number] {
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
+# User Information
 col1, col2 = st.columns([1, 1])
 with col1:
     name = st.text_input("Name")
@@ -92,12 +96,11 @@ if income > 0 and sde >= 0:
         wedgeprops=dict(width=0.35, edgecolor='white'),
         textprops=dict(color="black", fontsize=8)
     )
-
     ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=12, fontweight='bold')
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# Adjustments
+# Owner Adjustments
 st.markdown("---")
 st.subheader("Adjustments to Seller Discretionary Earnings")
 
@@ -134,7 +137,7 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# Multiples
+# Multiples Section
 st.subheader("What Drives the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -142,6 +145,7 @@ There are many variables that can lessen or enhance the value of your business. 
 </div>
 """, unsafe_allow_html=True)
 
+# Fixed SDE for multiples
 _fixed_sde_for_multiples = 86729
 
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
@@ -172,7 +176,6 @@ def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(100, height - 50, "MRA SDE Valuation Report")
     y_position = height - 90
@@ -204,27 +207,39 @@ def send_email(recipient_email, pdf_buffer):
     pdf_buffer.seek(0)
     encoded_pdf = base64.b64encode(pdf_buffer.read()).decode()
 
-    attachment = Attachment()
-    attachment.file_content = FileContent(encoded_pdf)
-    attachment.file_type = FileType('application/pdf')
-    attachment.file_name = FileName('sde_valuation_report.pdf')
-    attachment.disposition = Disposition('attachment')
-    message.add_attachment(attachment)
+    attachment = Attachment(
+        FileContent(encoded_pdf),
+        FileName("SDE_Valuation_Report.pdf"),
+        FileType("application/pdf"),
+        Disposition("attachment")
+    )
+    message.attachment = attachment
 
     try:
         sg = SendGridAPIClient(sendgrid_api_key)
         sg.send(message)
         st.success("✅ Email sent successfully!")
     except Exception as e:
-        st.error(f"❌ Email sending failed: {e}")
+        st.error(f"❌ Email sending failed: {str(e)}")
+
+# Connect to Google Sheets
+scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+client = gspread.authorize(creds)
+sheet = client.open("MRA Valuation Tool Users").sheet1
+
+# Save user info
+def save_user_info(name, email):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    sheet.append_row([timestamp, name, email])
 
 pdf_buffer = generate_pdf(data)
-st.download_button(
+
+if st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
     file_name="sde_results.pdf",
     mime="application/pdf"
-)
-
-if st.button("Send Results to Your Email"):
+):
     send_email(email, pdf_buffer)
+    save_user_info(name, email)
