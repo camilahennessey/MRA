@@ -53,11 +53,11 @@ st.markdown("---")
 st.subheader("Financial Information")
 col1, col2 = st.columns(2)
 with col1:
-    income_str = st.text_input("Food & Beverage Income ($)")
-    purchases_str = st.text_input("F&B Purchases ($)")
+    income_str = st.text_input("Food & Beverage Income ($)", help="Total revenue generated from food and beverage sales.")
+    purchases_str = st.text_input("F&B Purchases ($)", help="Cost of food and beverage inventory purchased.")
 with col2:
-    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)")
-    operating_str = st.text_input("Operating Expenses ($)")
+    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)", help="Total cost of employee wages, payroll taxes, and benefits.")
+    operating_str = st.text_input("Operating Expenses ($)", help="Other recurring expenses like rent, utilities, insurance, etc.")
 
 income = parse_input(income_str)
 purchases = parse_input(purchases_str)
@@ -97,19 +97,29 @@ if income > 0 and sde >= 0:
 st.markdown("---")
 st.subheader("Adjustments to Seller Discretionary Earnings")
 
-adjustment_fields = [
-    "Owner's Compensation", "Health Insurance", "Auto Expense", "Cellphone Expense",
-    "Other Personal Expense", "Extraordinary Nonrecurring Expense",
-    "Receipts for Owner Purchases", "Depreciation and Amortization", "Interest on Loan Payments",
-    "Travel and Entertainment", "Donations", "Rent Adjustment to $33k/year",
-    "Other – Salary Adjustment 2nd Owner", "Other", "Other (Additional)"
-]
+adjustment_fields = {
+    "Owner's Compensation": "Salary or personal compensation paid to the owner.",
+    "Health Insurance": "Health insurance premiums paid by the business for the owner.",
+    "Auto Expense": "Auto-related business expenses (e.g., mileage reimbursement, leases).",
+    "Cellphone Expense": "Business portion of cellphone expenses.",
+    "Other Personal Expense": "Other non-business personal expenses paid through the business.",
+    "Extraordinary Nonrecurring Expense": "One-time unusual expenses not expected to recur.",
+    "Receipts for Owner Purchases": "Personal purchases paid for by the business.",
+    "Depreciation and Amortization": "Non-cash expenses recorded for asset value reduction.",
+    "Interest on Loan Payments": "Interest portion of loan repayments.",
+    "Travel and Entertainment": "Business-related travel and client entertainment expenses.",
+    "Donations": "Charitable contributions made by the business.",
+    "Rent Adjustment to $33k/year": "Adjustment to reflect fair market rent, if applicable.",
+    "Other – Salary Adjustment 2nd Owner": "Adjustments for a second owner's salary.",
+    "Other": "Any other owner benefit adjustments not listed.",
+    "Other (Additional)": "Additional miscellaneous owner adjustments."
+}
 
 cols = st.columns(2)
 adjustments = {}
-for i, label in enumerate(adjustment_fields):
+for i, (label, help_text) in enumerate(adjustment_fields.items()):
     with cols[i % 2]:
-        adjustments[label] = st.text_input(label, value="")
+        adjustments[label] = st.text_input(label, value="", help=help_text)
 
 total_adjustments = sum(parse_input(v) for v in adjustments.values())
 owner_benefit_display = f"(${total_adjustments:,.0f})" if total_adjustments > 0 else f"${total_adjustments:,.0f}"
