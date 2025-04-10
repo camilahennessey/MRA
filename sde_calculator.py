@@ -1,174 +1,94 @@
+import os
 import streamlit as st
-import matplotlib.pyplot as plt
+import sendgrid
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import base64
-import sendgrid
-from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
-import gspread
+import pandas as pd
 from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 
-# === Streamlit Settings ===
+# Page setup
 st.set_page_config(layout="wide")
 
-# === Secrets ===
+# 1. EMAIL SETUP
 SENDGRID_API_KEY = st.secrets["SENDGRID_API_KEY"]
 SENDGRID_SENDER = st.secrets["SENDGRID_SENDER"]
 
-# Google Sheets Setup
+# 2. GOOGLE SHEETS SETUP
+GCP_SHEET_ID = st.secrets["GCP_SHEET_ID"]
 SCOPE = ["https://www.googleapis.com/auth/spreadsheets"]
-creds = Credentials.from_service_account_info(st.secrets, scopes=SCOPE)
-client = gspread.authorize(creds)
-sheet = client.open_by_key(st.secrets["GCP_SHEET_ID"]).sheet1
 
-# === Styling ===
-st.markdown("""
-<style>
-input[type=text], input[type=number] {
-    text-align: right;
-    border: 2px solid #d3d3d3 !important;
-    border-radius: 6px !important;
-    padding: 10px !important;
-    font-size: 16px !important;
-    color: #000000 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=SCOPE)
+service = build('sheets', 'v4', credentials=creds)
+sheet = service.spreadsheets()
 
-# === Header ===
-st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
+# Function to send email
+def send_email(to_email, pdf_buffer):
+    sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
+
+    message = Mail(
+        from_email=SENDGRID_SENDER,
+        to_emails=to_email,
+        subject="Your MRA SDE Valuation Report",
+        html_content="Attached is your Seller Discretionary Earnings (SDE) valuation report."
+    )
+
+    encoded_pdf = base64.b64encode(pdf_buffer.getvalue()).decode()
+    attachment = Attachment(
+        FileContent(encoded_pdf),
+        FileName("sde_valuation_report.pdf"),
+        FileType("application/pdf"),
+        Disposition("attachment")
+    )
+    message.attachment = attachment
+
+    try:
+        response = sg.send(message)
+        st.success("✅ Email sent successfully!")
+    except Exception as e:
+        st.error(f"❌ Email sending failed: {str(e)}")
+
+# Function to save user info to Google Sheets
+def save_to_google_sheets(name, email):
+    values = [[name, email]]
+    body = {"values": values}
+    sheet.values().append(
+        spreadsheetId=GCP_SHEET_ID,
+        range="MRA Valuation Tool Users!A:B",
+        valueInputOption="RAW",
+        body=body
+    ).execute()
+
+# UI
+st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
-# === User Info ===
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns(2)
 with col1:
     name = st.text_input("Name")
 with col2:
     email = st.text_input("Email")
 
-# === Description ===
-st.markdown("""
-<div style='background-color:#f0f0f0; padding:15px; border-left:6px solid #333;'>
-Seller Discretionary Earnings (SDE) represents a business’s operating income before deducting the owner's salary and benefits, interest, taxes, depreciation, and amortization. This calculator helps estimate SDE and project valuation ranges based on industry-standard multiples.
-</div>
-""", unsafe_allow_html=True)
+# Simple inputs for demonstration
+revenue = st.number_input("Enter Revenue", min_value=0)
+expenses = st.number_input("Enter Expenses", min_value=0)
 
-# === Helpers ===
-def parse_input(input_str):
-    try:
-        return float(input_str.replace(",", "").replace("(", "-").replace(")", ""))
-    except:
-        return 0.0
+# Calculate SDE
+sde = revenue - expenses
 
-def excel_round(x):
-    return int(x + 0.5)
+# Export PDF
+pdf_buffer = BytesIO()
+pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
+pdf.drawString(100, 750, f"MRA SDE Valuation Report for {name}")
+pdf.drawString(100, 720, f"Revenue: ${revenue:,.2f}")
+pdf.drawString(100, 700, f"Expenses: ${expenses:,.2f}")
+pdf.drawString(100, 680, f"Seller’s Discretionary Earnings (SDE): ${sde:,.2f}")
+pdf.save()
+pdf_buffer.seek(0)
 
-# === Financial Inputs ===
-st.markdown("---")
-st.subheader("Financial Information")
-
-col1, col2 = st.columns(2)
-with col1:
-    income_str = st.text_input("Food & Beverage Income ($)")
-    purchases_str = st.text_input("F&B Purchases ($)")
-with col2:
-    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)")
-    operating_str = st.text_input("Operating Expenses ($)")
-
-income = parse_input(income_str)
-purchases = parse_input(purchases_str)
-labor = parse_input(labor_str)
-operating = parse_input(operating_str)
-
-total_expenses = purchases + labor + operating
-sde = income - total_expenses
-sde_margin = (sde / income) * 100 if income > 0 else 0
-
-st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
-st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f}**")
-st.write(f"### Earnings Margin: **{sde_margin:.0f}%**")
-
-# === Donut Chart ===
-if income > 0 and sde >= 0:
-    values = [total_expenses, sde]
-    labels = ["Total Expenses", "SDE"]
-    colors = ['#2E86AB', '#F5B041']
-    fig, ax = plt.subplots(figsize=(3, 3))
-    ax.pie(values, labels=labels, colors=colors,
-           autopct=lambda p: f"${int(round(p * sum(values) / 100.0)):,}",
-           startangle=90, wedgeprops=dict(width=0.35, edgecolor='white'),
-           textprops=dict(color="black", fontsize=8))
-    ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=12, fontweight='bold')
-    ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
-    st.pyplot(fig)
-
-# === PDF Generator ===
-def generate_pdf(data):
-    buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(100, height - 50, "MRA SDE Valuation Report")
-    y_position = height - 90
-    for metric, value in data.items():
-        pdf.setFont("Helvetica-Bold" if "SDE" in metric or "Name" in metric else "Helvetica", 12)
-        pdf.drawString(80, y_position, f"{metric}: {value}")
-        y_position -= 20
-    pdf.save()
-    buffer.seek(0)
-    return buffer
-
-data = {
-    "Name": name, "Email": email,
-    "F&B Income": f"${income:,.0f}", "Purchases": f"${purchases:,.0f}",
-    "Labor": f"${labor:,.0f}", "Operating Expenses": f"${operating:,.0f}",
-    "Total Expenses": f"${total_expenses:,.0f}",
-    "SDE": f"${sde:,.0f}", "SDE Margin": f"{sde_margin:.0f}%"
-}
-
-pdf_buffer = generate_pdf(data)
-
-# === Send Email ===
-def send_email(recipient_email, pdf_buffer):
-    if not recipient_email or "@" not in recipient_email:
-        st.error("Invalid email address.")
-        return
-
-    pdf_encoded = base64.b64encode(pdf_buffer.getvalue()).decode()
-
-    sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
-
-    attachment = Attachment(
-        FileContent(pdf_encoded),
-        FileName("sde_results.pdf"),
-        FileType("application/pdf"),
-        Disposition("attachment")
-    )
-
-    message = Mail(
-        from_email=SENDGRID_SENDER,
-        to_emails=recipient_email,
-        subject="Your MRA SDE Valuation Report",
-        plain_text_content="Attached is your personalized valuation report."
-    )
-    message.attachment = attachment
-
-    try:
-        sg.send(message)
-        st.success("✅ Email sent successfully!")
-    except Exception as e:
-        st.error(f"❌ Email sending failed: {str(e)}")
-
-# === Save to Google Sheets ===
-def save_to_google_sheets(name, email):
-    try:
-        sheet.append_row([name, email])
-        st.success("✅ Data saved to Google Sheets successfully!")
-    except Exception as e:
-        st.error(f"❌ Failed to save to Google Sheets: {str(e)}")
-
-# === Buttons ===
 st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
@@ -181,5 +101,4 @@ if st.button("Send Results to Your Email"):
         send_email(email, pdf_buffer)
         save_to_google_sheets(name, email)
     else:
-        st.error("❌ Please fill in your Name and Email before sending.")
-
+        st.error("❌ Please fill out both Name and Email before sending.")
