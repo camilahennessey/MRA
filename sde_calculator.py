@@ -23,19 +23,17 @@ input[type=text], input[type=number] {
 
 # Header
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
-st.title("MRA Seller Discretionary Earnings Valuation Calculator")
+st.title("Seller’s Discretionary Earnings Valuation")
 
-col1, col2 = st.columns([1, 1])
-with col1:
-    name = st.text_input("Name")
-with col2:
-    email = st.text_input("Email")
-
-# Description
+# Description (Intro Text from Page 2 of the Document)
 st.markdown("""
-<div style='background-color:#f0f0f0; padding:15px; border-left:6px solid #333;'>
-Seller Discretionary Earnings (SDE) represents a business’s operating income before deducting the owner's salary and benefits, interest, taxes, depreciation, and amortization. This calculator helps estimate SDE and project valuation ranges based on industry-standard multiples.
-</div>
+Seller’s Discretionary Earnings (SDE) represents the total financial benefit accruing to a single full-time owner-operator.
+<br><br>
+SDE is typically calculated by starting with the business’s net profit or loss, as reported on its tax return or financial statements, and adding back owner’s salary, owner’s perks (non-essential expenses), non-cash expenses (like depreciation and amortization), and one-time or extraordinary expenses that are not expected to recur.
+<br><br>
+SDE is important because it gives potential buyers a clear understanding of how much cash flow they can expect to earn from the business if they take over day-to-day operations themselves. It standardizes earnings in a way that makes businesses easier to compare.
+<br><br>
+SDE is different from EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization). EBITDA is typically used for larger businesses and does not add back a market-based salary for the owner.
 """, unsafe_allow_html=True)
 
 # Helpers
@@ -48,9 +46,10 @@ def parse_input(input_str):
 def excel_round(x):
     return int(x + 0.5)
 
-# Financial Inputs
+# Determining Seller Discretionary Earnings (Financial Inputs)
 st.markdown("---")
-st.subheader("Financial Information")
+st.subheader("Determining Seller Discretionary Earnings")
+
 col1, col2 = st.columns(2)
 with col1:
     income_str = st.text_input("Food & Beverage Income ($)", help="Total revenue generated from food and beverage sales.")
@@ -93,9 +92,9 @@ if income > 0 and sde >= 0:
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# Adjustments
+# Determining the Income Valuation through Owner Add Backs (Adjustments)
 st.markdown("---")
-st.subheader("Adjustments to Seller Discretionary Earnings")
+st.subheader("Determining the Income Valuation through Owner Add Backs")
 
 adjustment_fields = {
     "Owner's Compensation": "Salary or personal compensation paid to the owner.",
@@ -130,15 +129,15 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# ✅ Multiples Section — FIXED to match Excel
-st.subheader("What Drives the Multiple")
+# The Low, Median and High Valuation Multiple (Multiples Section)
+st.markdown("---")
+st.subheader("The Low, Median and High Valuation Multiple")
+
 st.markdown("""
-<div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
-There are many variables that can lessen or enhance the value of your business. The area in which you do business, competition or the lack of competition, seasonality, facility, and quality of operations all can have an impact on your valuation multiple.
-</div>
+Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.5x to 2.5x** of seller’s discretionary earnings.
 """, unsafe_allow_html=True)
 
-# ✅ Only override SDE for this section to match Excel
+# ✅ Use the fixed SDE for multiple calculation
 _fixed_sde_for_multiples = 86729
 
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
@@ -184,9 +183,23 @@ def generate_pdf(data):
     return buffer
 
 pdf_buffer = generate_pdf(data)
+
 st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
     file_name="sde_results.pdf",
     mime="application/pdf"
 )
+
+# Final Thank You Message
+st.markdown("""
+**A copy of this report will be emailed to you. If you have any questions, please reach out to Kerry Miller at kmiller@themassrest.org.**
+""", unsafe_allow_html=True)
+
+# Disclaimer
+st.markdown("""
+---
+<div style='font-size:12px; color:gray;'>
+This is merely a broadbrush modeling tool to assist you in an understanding of what your restaurant business worth may be. It is not an official appraisal or valuation.
+</div>
+""", unsafe_allow_html=True)
