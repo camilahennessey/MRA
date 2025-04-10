@@ -4,10 +4,10 @@ import matplotlib.patches as mpatches
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import base64
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
-import base64
 
 st.set_page_config(layout="wide")
 
@@ -142,7 +142,6 @@ There are many variables that can lessen or enhance the value of your business. 
 </div>
 """, unsafe_allow_html=True)
 
-# Only override SDE for this section
 _fixed_sde_for_multiples = 86729
 
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
@@ -202,16 +201,15 @@ def send_email(recipient_email, pdf_buffer):
         html_content="Attached is your SDE Valuation Report."
     )
 
-    # Add PDF attachment
     pdf_buffer.seek(0)
     encoded_pdf = base64.b64encode(pdf_buffer.read()).decode()
-    attachment = Attachment(
-        FileContent(encoded_pdf),
-        FileName('sde_valuation_report.pdf'),
-        FileType('application/pdf'),
-        Disposition('attachment')
-    )
-    message.attachment = attachment
+
+    attachment = Attachment()
+    attachment.file_content = FileContent(encoded_pdf)
+    attachment.file_type = FileType('application/pdf')
+    attachment.file_name = FileName('sde_valuation_report.pdf')
+    attachment.disposition = Disposition('attachment')
+    message.add_attachment(attachment)
 
     try:
         sg = SendGridAPIClient(sendgrid_api_key)
@@ -221,7 +219,6 @@ def send_email(recipient_email, pdf_buffer):
         st.error(f"❌ Email sending failed: {e}")
 
 pdf_buffer = generate_pdf(data)
-
 st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
