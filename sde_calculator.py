@@ -1,17 +1,42 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import requests
+import os
 import base64
+import sendgrid
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 import gspread
 from google.oauth2.service_account import Credentials
 
+# === Streamlit Page Settings ===
 st.set_page_config(layout="wide")
 
-# --- Styling
+# === Load Secrets ===
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDGRID_SENDER = os.getenv("SENDGRID_SENDER")
+
+# Load Google Service Account
+service_account_info = {
+    "type": os.getenv("GCP_TYPE"),
+    "project_id": os.getenv("GCP_PROJECT_ID"),
+    "private_key_id": os.getenv("GCP_PRIVATE_KEY_ID"),
+    "private_key": os.getenv("GCP_PRIVATE_KEY").replace('\\n', '\n'),
+    "client_email": os.getenv("GCP_CLIENT_EMAIL"),
+    "client_id": os.getenv("GCP_CLIENT_ID"),
+    "auth_uri": os.getenv("GCP_AUTH_URI"),
+    "token_uri": os.getenv("GCP_TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("GCP_AUTH_PROVIDER_CERT_URL"),
+    "client_x509_cert_url": os.getenv("GCP_CLIENT_CERT_URL"),
+}
+
+# Google Sheets Setup
+SCOPE = ["https://www.googleapis.com/auth/spreadsheets"]
+credentials = Credentials.from_service_account_info(service_account_info, scopes=SCOPE)
+client = gspread.authorize(credentials)
+
+# === Styling ===
 st.markdown("""
 <style>
 input[type=text], input[type=number] {
@@ -25,24 +50,25 @@ input[type=text], input[type=number] {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Header
+# === Header ===
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
+# === User Info ===
 col1, col2 = st.columns([1, 1])
 with col1:
     name = st.text_input("Name")
 with col2:
     email = st.text_input("Email")
 
-# --- Description
+# === Description ===
 st.markdown("""
 <div style='background-color:#f0f0f0; padding:15px; border-left:6px solid #333;'>
 Seller Discretionary Earnings (SDE) represents a business’s operating income before deducting the owner's salary and benefits, interest, taxes, depreciation, and amortization. This calculator helps estimate SDE and project valuation ranges based on industry-standard multiples.
 </div>
 """, unsafe_allow_html=True)
 
-# --- Helpers
+# === Helpers ===
 def parse_input(input_str):
     try:
         return float(input_str.replace(",", "").replace("(", "-").replace(")", ""))
@@ -52,16 +78,17 @@ def parse_input(input_str):
 def excel_round(x):
     return int(x + 0.5)
 
-# --- Financial Inputs
+# === Financial Inputs ===
 st.markdown("---")
 st.subheader("Financial Information")
+
 col1, col2 = st.columns(2)
 with col1:
-    income_str = st.text_input("Food & Beverage Income ($)", help="Total revenue generated from food and beverage sales.")
-    purchases_str = st.text_input("F&B Purchases ($)", help="Cost of food and beverage inventory purchased.")
+    income_str = st.text_input("Food & Beverage Income ($)", help="Total revenue from food and beverage sales.")
+    purchases_str = st.text_input("F&B Purchases ($)", help="Cost of inventory purchased.")
 with col2:
-    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)", help="Total cost of employee wages, payroll taxes, and benefits.")
-    operating_str = st.text_input("Operating Expenses ($)", help="Other recurring expenses like rent, utilities, insurance, etc.")
+    labor_str = st.text_input("Salaries, Wages, Taxes & Benefits ($)", help="Employee wages, taxes, and benefits.")
+    operating_str = st.text_input("Operating Expenses ($)", help="Rent, utilities, insurance, etc.")
 
 income = parse_input(income_str)
 purchases = parse_input(purchases_str)
@@ -76,47 +103,38 @@ st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
 st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f}**")
 st.write(f"### Earnings Margin: **{sde_margin:.0f}%**")
 
-# --- Donut Chart
+# === Donut Chart ===
 if income > 0 and sde >= 0:
     values = [total_expenses, sde]
     labels = ["Total Expenses", "SDE"]
     colors = ['#2E86AB', '#F5B041']
-
     fig, ax = plt.subplots(figsize=(3, 3))
-    wedges, texts, autotexts = ax.pie(
-        values,
-        labels=labels,
-        colors=colors,
-        autopct=lambda p: f"${int(round(p * sum(values) / 100.0)):,}",
-        startangle=90,
-        wedgeprops=dict(width=0.35, edgecolor='white'),
-        textprops=dict(color="black", fontsize=8)
-    )
-
+    ax.pie(values, labels=labels, colors=colors, autopct=lambda p: f"${int(round(p * sum(values) / 100.0)):,}",
+           startangle=90, wedgeprops=dict(width=0.35, edgecolor='white'), textprops=dict(color="black", fontsize=8))
     ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=12, fontweight='bold')
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# --- Adjustments
+# === Adjustments ===
 st.markdown("---")
 st.subheader("Adjustments to Seller Discretionary Earnings")
 
 adjustment_fields = {
     "Owner's Compensation": "Salary or personal compensation paid to the owner.",
-    "Health Insurance": "Health insurance premiums paid by the business for the owner.",
-    "Auto Expense": "Auto-related business expenses (e.g., mileage reimbursement, leases).",
-    "Cellphone Expense": "Business portion of cellphone expenses.",
-    "Other Personal Expense": "Other non-business personal expenses paid through the business.",
-    "Extraordinary Nonrecurring Expense": "One-time unusual expenses not expected to recur.",
-    "Receipts for Owner Purchases": "Personal purchases paid for by the business.",
-    "Depreciation and Amortization": "Non-cash expenses recorded for asset value reduction.",
-    "Interest on Loan Payments": "Interest portion of loan repayments.",
-    "Travel and Entertainment": "Business-related travel and client entertainment expenses.",
-    "Donations": "Charitable contributions made by the business.",
-    "Rent Adjustment to $33k/year": "Adjustment to reflect fair market rent, if applicable.",
-    "Other – Salary Adjustment 2nd Owner": "Adjustments for a second owner's salary.",
-    "Other": "Any other owner benefit adjustments not listed.",
-    "Other (Additional)": "Additional miscellaneous owner adjustments."
+    "Health Insurance": "Health insurance premiums.",
+    "Auto Expense": "Auto-related expenses.",
+    "Cellphone Expense": "Cellphone expenses.",
+    "Other Personal Expense": "Other non-business expenses.",
+    "Extraordinary Nonrecurring Expense": "One-time unusual expenses.",
+    "Receipts for Owner Purchases": "Personal purchases through the business.",
+    "Depreciation and Amortization": "Non-cash depreciation expenses.",
+    "Interest on Loan Payments": "Loan interest payments.",
+    "Travel and Entertainment": "Travel & entertainment expenses.",
+    "Donations": "Charitable contributions.",
+    "Rent Adjustment to $33k/year": "Fair market rent adjustment.",
+    "Other – Salary Adjustment 2nd Owner": "Second owner's salary adjustment.",
+    "Other": "Other owner adjustments.",
+    "Other (Additional)": "Additional adjustments."
 }
 
 cols = st.columns(2)
@@ -127,23 +145,23 @@ for i, (label, help_text) in enumerate(adjustment_fields.items()):
 
 total_adjustments = sum(parse_input(v) for v in adjustments.values())
 owner_benefit_display = f"(${total_adjustments:,.0f})" if total_adjustments > 0 else f"${total_adjustments:,.0f}"
+
 st.write(f"### Total Owner Benefit: **{owner_benefit_display}**")
 
-# --- Net Profit = SDE + Adjustments
+# Net Profit = SDE + Adjustments
 net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# --- Multiples Section (Fixed values)
+# === Multiples Section ===
 st.subheader("What Drives the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
-There are many variables that can lessen or enhance the value of your business. The area in which you do business, competition or the lack of competition, seasonality, facility, and quality of operations all can have an impact on your valuation multiple.
+There are many variables that can lessen or enhance the value of your business.
 </div>
 """, unsafe_allow_html=True)
 
 _fixed_sde_for_multiples = 86729
-
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
 med_val = excel_round(_fixed_sde_for_multiples * 2.0)
 high_val = excel_round(_fixed_sde_for_multiples * 2.5)
@@ -152,75 +170,31 @@ st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
 st.write(f"#### High Multiple Valuation (2.5x): **${high_val:,.0f}**")
 
-# --- PDF Export
+# === PDF Export ===
+st.subheader("Export Results")
+
 def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
-
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(100, height - 50, "MRA SDE Valuation Report")
     y_position = height - 90
-
-    for metric, value in zip(data["Metric"], data["Value"]):
+    for metric, value in data.items():
         pdf.setFont("Helvetica-Bold" if "SDE" in metric or "Name" in metric else "Helvetica", 12)
         pdf.drawString(80, y_position, f"{metric}: {value}")
         y_position -= 20
-
     pdf.save()
     buffer.seek(0)
     return buffer
 
-# --- Save to Google Sheets
-def save_to_google_sheets(name, email):
-    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"])
-    client = gspread.authorize(creds)
-    sheet = client.open("MRA_Valuation_Users").sheet1
-    sheet.append_row([name, email])
-
-# --- Email Sending
-def send_email(to_email, pdf_file):
-    api_key = st.secrets["SENDGRID_API_KEY"]
-    sender = st.secrets["SENDGRID_SENDER"]
-
-    encoded_pdf = base64.b64encode(pdf_file.getvalue()).decode()
-
-    response = requests.post(
-        "https://api.sendgrid.com/v3/mail/send",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "personalizations": [{"to": [{"email": to_email}]}],
-            "from": {"email": sender},
-            "subject": "Your MRA SDE Valuation Report",
-            "content": [{"type": "text/plain", "value": "Attached is your personalized valuation report."}],
-            "attachments": [{
-                "content": encoded_pdf,
-                "filename": "valuation_report.pdf",
-                "type": "application/pdf",
-                "disposition": "attachment"
-            }]
-        }
-    )
-    if response.status_code != 202:
-        raise Exception(f"SendGrid Error: {response.text}")
-
-# --- Export Section
-st.subheader("Export Results")
-
 data = {
-    "Metric": [
-        "Name", "Email", "F&B Income", "Purchases", "Labor", "Operating Expenses",
-        "Total Expenses", "SDE", "SDE Margin", "Total Owner Benefit", "Net Profit/Loss", "Total Income Valuation",
-        "Low Multiple Valuation (1.5x)", "Median Multiple Valuation (2.0x)", "High Multiple Valuation (2.5x)"
-    ],
-    "Value": [
-        name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
-        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", owner_benefit_display,
-        f"${net_profit:,.0f}", f"${sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
-    ]
+    "Name": name, "Email": email, "F&B Income": f"${income:,.0f}", "Purchases": f"${purchases:,.0f}",
+    "Labor": f"${labor:,.0f}", "Operating Expenses": f"${operating:,.0f}", "Total Expenses": f"${total_expenses:,.0f}",
+    "SDE": f"${sde:,.0f}", "SDE Margin": f"{sde_margin:.0f}%", "Total Owner Benefit": owner_benefit_display,
+    "Net Profit/Loss": f"${net_profit:,.0f}", "Total Income Valuation": f"${sde:,.0f}",
+    "Low Multiple Valuation (1.5x)": f"${low_val:,.0f}", "Median Multiple Valuation (2.0x)": f"${med_val:,.0f}",
+    "High Multiple Valuation (2.5x)": f"${high_val:,.0f}"
 }
 
 pdf_buffer = generate_pdf(data)
@@ -232,10 +206,42 @@ st.download_button(
     mime="application/pdf"
 )
 
-if st.button("Send Results to Your Email"):
+# === Send Email ===
+def send_email(recipient, pdf_buffer):
     try:
-        send_email(email, pdf_buffer)
-        save_to_google_sheets(name, email)
-        st.success("Email sent successfully and record saved! ✅")
+        if not recipient:
+            st.error("Please enter a valid email.")
+            return
+
+        pdf_base64 = base64.b64encode(pdf_buffer.getvalue()).decode()
+        sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
+
+        attachment = Attachment(
+            FileContent(pdf_base64),
+            FileName("sde_results.pdf"),
+            FileType("application/pdf"),
+            Disposition("attachment")
+        )
+
+        email = Mail(
+            from_email=SENDGRID_SENDER,
+            to_emails=recipient,
+            subject="Your MRA SDE Valuation Report",
+            plain_text_content="Attached is your valuation report."
+        )
+
+        email.attachment = attachment
+        sg.send(email)
+        st.success("Email sent successfully!")
+
     except Exception as e:
-        st.error(f"❌ Error: {e}")
+        st.error(f"Email sending failed: {e}")
+
+if st.button("Send Results to Your Email"):
+    send_email(email, pdf_buffer)
+
+# === Save to Google Sheets ===
+if name and email:
+    sheet = client.open("YOUR_SHEET_NAME_HERE").sheet1
+    sheet.append_row([name, email, income, purchases, labor, operating, total_expenses, sde, sde_margin, total_adjustments, net_profit, sde])
+
