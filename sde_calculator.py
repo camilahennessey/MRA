@@ -4,6 +4,7 @@ import matplotlib.patches as mpatches
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from datetime import datetime
 
 st.set_page_config(layout="wide")
 
@@ -25,7 +26,7 @@ input[type=text], input[type=number] {
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.title("Seller’s Discretionary Earnings Valuation")
 
-# Description (Intro Text from Page 2 of the Document)
+# Description (Intro Text from Word Document)
 st.markdown("""
 Seller’s Discretionary Earnings (SDE) represents the total financial benefit accruing to a single full-time owner-operator.
 <br><br>
@@ -46,7 +47,14 @@ def parse_input(input_str):
 def excel_round(x):
     return int(x + 0.5)
 
-# Determining Seller Discretionary Earnings (Financial Inputs)
+# User Info
+col1, col2 = st.columns([1, 1])
+with col1:
+    name = st.text_input("Name")
+with col2:
+    email = st.text_input("Email")
+
+# Financial Inputs
 st.markdown("---")
 st.subheader("Determining Seller Discretionary Earnings")
 
@@ -92,7 +100,7 @@ if income > 0 and sde >= 0:
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# Determining the Income Valuation through Owner Add Backs (Adjustments)
+# Adjustments
 st.markdown("---")
 st.subheader("Determining the Income Valuation through Owner Add Backs")
 
@@ -129,7 +137,7 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# The Low, Median and High Valuation Multiple (Multiples Section)
+# Multiples
 st.markdown("---")
 st.subheader("The Low, Median and High Valuation Multiple")
 
@@ -137,7 +145,6 @@ st.markdown("""
 Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.5x to 2.5x** of seller’s discretionary earnings.
 """, unsafe_allow_html=True)
 
-# ✅ Use the fixed SDE for multiple calculation
 _fixed_sde_for_multiples = 86729
 
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
@@ -150,6 +157,10 @@ st.write(f"#### High Multiple Valuation (2.5x): **${high_val:,.0f}**")
 
 # PDF Export
 st.subheader("Export Results")
+
+# 🔥 Fix: Ensure name and email are safe (no crash)
+name = name or ""
+email = email or ""
 
 data = {
     "Metric": [
@@ -191,7 +202,7 @@ st.download_button(
     mime="application/pdf"
 )
 
-# Final Thank You Message
+# Final message
 st.markdown("""
 **A copy of this report will be emailed to you. If you have any questions, please reach out to Kerry Miller at kmiller@themassrest.org.**
 """, unsafe_allow_html=True)
