@@ -1,13 +1,11 @@
 streamlit
-pandas
 matplotlib
 reportlab
+python-dotenv
 sendgrid
-gspread
 google-auth
 google-auth-oauthlib
-google-auth-httplib2
-oauth2client
-python-dotenv
+gspread
+google-api-python-client
 
 
