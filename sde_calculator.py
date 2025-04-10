@@ -4,10 +4,11 @@ import matplotlib.patches as mpatches
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import base64
-import os
-from sendgrid import SendGridAPIClient
+import requests
+import gspread
+from google.oauth2.service_account import Credentials
 
+# Streamlit setup
 st.set_page_config(layout="wide")
 
 # Styling
@@ -28,6 +29,7 @@ input[type=text], input[type=number] {
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
+# User Info
 col1, col2 = st.columns([1, 1])
 with col1:
     name = st.text_input("Name")
@@ -133,7 +135,7 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# Multiples Section
+# Multiples
 st.subheader("What Drives the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -151,22 +153,7 @@ st.write(f"#### Low Multiple Valuation (1.5x): **${low_val:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${med_val:,.0f}**")
 st.write(f"#### High Multiple Valuation (2.5x): **${high_val:,.0f}**")
 
-# PDF Export
-st.subheader("Export Results")
-
-data = {
-    "Metric": [
-        "Name", "Email", "F&B Income", "Purchases", "Labor", "Operating Expenses",
-        "Total Expenses", "SDE", "SDE Margin", "Total Owner Benefit", "Net Profit/Loss", "Total Income Valuation",
-        "Low Multiple Valuation (1.5x)", "Median Multiple Valuation (2.0x)", "High Multiple Valuation (2.5x)"
-    ],
-    "Value": [
-        name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
-        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", owner_benefit_display,
-        f"${net_profit:,.0f}", f"${sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
-    ]
-}
-
+# Generate PDF
 def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -185,8 +172,67 @@ def generate_pdf(data):
     buffer.seek(0)
     return buffer
 
+data = {
+    "Metric": [
+        "Name", "Email", "F&B Income", "Purchases", "Labor", "Operating Expenses",
+        "Total Expenses", "SDE", "SDE Margin", "Total Owner Benefit", "Net Profit/Loss", "Total Income Valuation",
+        "Low Multiple Valuation (1.5x)", "Median Multiple Valuation (2.0x)", "High Multiple Valuation (2.5x)"
+    ],
+    "Value": [
+        name, email, f"${income:,.0f}", f"${purchases:,.0f}", f"${labor:,.0f}", f"${operating:,.0f}",
+        f"${total_expenses:,.0f}", f"${sde:,.0f}", f"{sde_margin:.0f}%", owner_benefit_display,
+        f"${net_profit:,.0f}", f"${sde:,.0f}", f"${low_val:,.0f}", f"${med_val:,.0f}", f"${high_val:,.0f}"
+    ]
+}
+
 pdf_buffer = generate_pdf(data)
 
+# Email sending
+def send_email(to_email, pdf_file):
+    api_key = st.secrets["SENDGRID_API_KEY"]
+    sender = st.secrets["SENDGRID_SENDER"]
+
+    response = requests.post(
+        "https://api.sendgrid.com/v3/mail/send",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "personalizations": [{"to": [{"email": to_email}]}],
+            "from": {"email": sender},
+            "subject": "Your MRA SDE Valuation Report",
+            "content": [{
+                "type": "text/plain",
+                "value": "Attached is your personalized valuation report."
+            }],
+            "attachments": [{
+                "content": pdf_file.getvalue().decode('latin1').encode('base64').decode(),
+                "filename": "valuation_report.pdf",
+                "type": "application/pdf",
+                "disposition": "attachment"
+            }]
+        }
+    )
+    if response.status_code != 202:
+        raise Exception(f"SendGrid Error: {response.text}")
+
+# Save to Google Sheets
+def save_to_google_sheets(name, email):
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    credentials = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes
+    )
+    gc = gspread.authorize(credentials)
+    sh = gc.open("MRA Valuation Calculator Responses")  # Name of your Google Sheet
+    worksheet = sh.sheet1
+    worksheet.append_row([name, email])
+
+# Buttons
 st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
@@ -194,54 +240,13 @@ st.download_button(
     mime="application/pdf"
 )
 
-# --- NEW: Send Email Button ---
-def send_email(recipient_email, pdf_buffer):
-    sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
-    sender_email = os.getenv("SENDGRID_SENDER")
-
-    if not sendgrid_api_key or not sender_email:
-        st.error("Email sending failed: API key or sender email not found.")
-        return
-
-    pdf_buffer.seek(0)
-    encoded_pdf = base64.b64encode(pdf_buffer.read()).decode()
-
-    message = {
-        "personalizations": [
-            {
-                "to": [{"email": recipient_email}],
-                "subject": "Your MRA SDE Valuation Report"
-            }
-        ],
-        "from": {"email": sender_email},
-        "content": [
-            {
-                "type": "text/plain",
-                "value": "Attached is your SDE Valuation Report."
-            }
-        ],
-        "attachments": [
-            {
-                "content": encoded_pdf,
-                "filename": "SDE_Valuation_Report.pdf",
-                "type": "application/pdf",
-                "disposition": "attachment"
-            }
-        ]
-    }
-
-    try:
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.client.mail.send.post(request_body=message)
-        if response.status_code in [200, 202]:
-            st.success("✅ Email sent successfully!")
-        else:
-            st.error(f"❌ Email sending failed: {response.status_code} {response.body}")
-    except Exception as e:
-        st.error(f"❌ Email sending failed: {str(e)}")
-
 if st.button("Send Results to Your Email"):
     if email:
-        send_email(email, pdf_buffer)
+        try:
+            send_email(email, pdf_buffer)
+            save_to_google_sheets(name, email)
+            st.success("✅ Email sent and user info saved!")
+        except Exception as e:
+            st.error(f"❌ Error: {str(e)}")
     else:
         st.error("Please enter your email address above.")
