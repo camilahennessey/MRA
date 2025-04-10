@@ -4,10 +4,10 @@ import matplotlib.patches as mpatches
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import smtplib
-from email.message import EmailMessage
-import ssl
 import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+import base64
 
 st.set_page_config(layout="wide")
 
@@ -134,7 +134,7 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# ✅ Multiples Section — FIXED to match Excel
+# Multiples
 st.subheader("What Drives the Multiple")
 st.markdown("""
 <div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
@@ -142,6 +142,7 @@ There are many variables that can lessen or enhance the value of your business. 
 </div>
 """, unsafe_allow_html=True)
 
+# Only override SDE for this section
 _fixed_sde_for_multiples = 86729
 
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
@@ -172,50 +173,61 @@ def generate_pdf(data):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(100, height - 50, "MRA SDE Valuation Report")
     y_position = height - 90
+
     for metric, value in zip(data["Metric"], data["Value"]):
         pdf.setFont("Helvetica-Bold" if "SDE" in metric or "Name" in metric else "Helvetica", 12)
         pdf.drawString(80, y_position, f"{metric}: {value}")
         y_position -= 20
+
     pdf.save()
     buffer.seek(0)
     return buffer
 
 def send_email(recipient_email, pdf_buffer):
-    sender_email = os.getenv("SENDGRID_SENDER")
     sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
-    if not sender_email or not sendgrid_api_key:
+    sender_email = os.getenv("SENDGRID_SENDER")
+    
+    if not sendgrid_api_key or not sender_email:
         st.error("Email sending failed: API key or sender email not found.")
         return
 
-    message = EmailMessage()
-    message["From"] = sender_email
-    message["To"] = recipient_email
-    message["Subject"] = "Your MRA SDE Valuation Report"
-    message.set_content("Please find attached your SDE Valuation Report.")
-
-    message.add_attachment(
-        pdf_buffer.getvalue(),
-        maintype='application',
-        subtype='pdf',
-        filename='sde_results.pdf'
+    message = Mail(
+        from_email=sender_email,
+        to_emails=recipient_email,
+        subject="Your MRA SDE Valuation Report",
+        html_content="Attached is your SDE Valuation Report."
     )
 
-    context = ssl.create_default_context()
-    with smtplib.SMTP("smtp.sendgrid.net", 587) as server:
-        server.starttls(context=context)
-        server.login("apikey", sendgrid_api_key)
-        server.send_message(message)
+    # Add PDF attachment
+    pdf_buffer.seek(0)
+    encoded_pdf = base64.b64encode(pdf_buffer.read()).decode()
+    attachment = Attachment(
+        FileContent(encoded_pdf),
+        FileName('sde_valuation_report.pdf'),
+        FileType('application/pdf'),
+        Disposition('attachment')
+    )
+    message.attachment = attachment
+
+    try:
+        sg = SendGridAPIClient(sendgrid_api_key)
+        sg.send(message)
+        st.success("✅ Email sent successfully!")
+    except Exception as e:
+        st.error(f"❌ Email sending failed: {e}")
 
 pdf_buffer = generate_pdf(data)
 
-if st.download_button(
+st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
     file_name="sde_results.pdf",
     mime="application/pdf"
-):
+)
+
+if st.button("Send Results to Your Email"):
     send_email(email, pdf_buffer)
-    st.success("✅ PDF downloaded and emailed successfully!")
