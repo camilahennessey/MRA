@@ -4,7 +4,9 @@ import matplotlib.patches as mpatches
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from datetime import datetime
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 st.set_page_config(layout="wide")
 
@@ -24,17 +26,19 @@ input[type=text], input[type=number] {
 
 # Header
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=500)
-st.title("Seller’s Discretionary Earnings Valuation")
+st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
-# Description (Intro Text from Word Document)
+col1, col2 = st.columns([1, 1])
+with col1:
+    name = st.text_input("Name")
+with col2:
+    email = st.text_input("Email")
+
+# Description
 st.markdown("""
-Seller’s Discretionary Earnings (SDE) represents the total financial benefit accruing to a single full-time owner-operator.
-<br><br>
-SDE is typically calculated by starting with the business’s net profit or loss, as reported on its tax return or financial statements, and adding back owner’s salary, owner’s perks (non-essential expenses), non-cash expenses (like depreciation and amortization), and one-time or extraordinary expenses that are not expected to recur.
-<br><br>
-SDE is important because it gives potential buyers a clear understanding of how much cash flow they can expect to earn from the business if they take over day-to-day operations themselves. It standardizes earnings in a way that makes businesses easier to compare.
-<br><br>
-SDE is different from EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization). EBITDA is typically used for larger businesses and does not add back a market-based salary for the owner.
+<div style='background-color:#f0f0f0; padding:15px; border-left:6px solid #333;'>
+Seller Discretionary Earnings (SDE) represents a business’s operating income before deducting the owner's salary and benefits, interest, taxes, depreciation, and amortization. This calculator helps estimate SDE and project valuation ranges based on industry-standard multiples.
+</div>
 """, unsafe_allow_html=True)
 
 # Helpers
@@ -47,17 +51,9 @@ def parse_input(input_str):
 def excel_round(x):
     return int(x + 0.5)
 
-# User Info
-col1, col2 = st.columns([1, 1])
-with col1:
-    name = st.text_input("Name")
-with col2:
-    email = st.text_input("Email")
-
 # Financial Inputs
 st.markdown("---")
-st.subheader("Determining Seller Discretionary Earnings")
-
+st.subheader("Financial Information")
 col1, col2 = st.columns(2)
 with col1:
     income_str = st.text_input("Food & Beverage Income ($)", help="Total revenue generated from food and beverage sales.")
@@ -102,7 +98,7 @@ if income > 0 and sde >= 0:
 
 # Adjustments
 st.markdown("---")
-st.subheader("Determining the Income Valuation through Owner Add Backs")
+st.subheader("Adjustments to Seller Discretionary Earnings")
 
 adjustment_fields = {
     "Owner's Compensation": "Salary or personal compensation paid to the owner.",
@@ -137,14 +133,15 @@ net_profit = sde + total_adjustments
 st.write(f"### Net Profit/Loss: **${net_profit:,.0f}**")
 st.write(f"### Total Income Valuation: **${sde:,.0f}**")
 
-# Multiples
-st.markdown("---")
-st.subheader("The Low, Median and High Valuation Multiple")
-
+# Multiples Section
+st.subheader("What Drives the Multiple")
 st.markdown("""
-Multiples help determine the estimated business valuation. Most common multiples in the restaurant industry range from **1.5x to 2.5x** of seller’s discretionary earnings.
+<div style='background-color:#f1f1f1; padding:10px; border-left:6px solid #333; border-radius:5px; font-size:14px;'>
+There are many variables that can lessen or enhance the value of your business. The area in which you do business, competition or the lack of competition, seasonality, facility, and quality of operations all can have an impact on your valuation multiple.
+</div>
 """, unsafe_allow_html=True)
 
+# Fixed SDE for multiples calculation
 _fixed_sde_for_multiples = 86729
 
 low_val = excel_round(_fixed_sde_for_multiples * 1.5)
@@ -157,10 +154,6 @@ st.write(f"#### High Multiple Valuation (2.5x): **${high_val:,.0f}**")
 
 # PDF Export
 st.subheader("Export Results")
-
-# 🔥 Fix: Ensure name and email are safe (no crash)
-name = name or ""
-email = email or ""
 
 data = {
     "Metric": [
@@ -202,15 +195,28 @@ st.download_button(
     mime="application/pdf"
 )
 
-# Final message
-st.markdown("""
-**A copy of this report will be emailed to you. If you have any questions, please reach out to Kerry Miller at kmiller@themassrest.org.**
-""", unsafe_allow_html=True)
+# 📬 Send Email Function
+def send_email(recipient_email, pdf_data):
+    message = Mail(
+        from_email='chennessey@themassrest.org',  # Your verified sender
+        to_emails=recipient_email,
+        subject='Your MRA SDE Valuation Report',
+        plain_text_content='Attached is your requested SDE Valuation Report.'
+    )
 
-# Disclaimer
-st.markdown("""
----
-<div style='font-size:12px; color:gray;'>
-This is merely a broadbrush modeling tool to assist you in an understanding of what your restaurant business worth may be. It is not an official appraisal or valuation.
-</div>
-""", unsafe_allow_html=True)
+    message.add_attachment(
+        pdf_data.read(),
+        'application/pdf',
+        'sde_results.pdf'
+    )
+
+    try:
+        sg = SendGridAPIClient(st.secrets["SENDGRID_API_KEY"])
+        response = sg.send(message)
+        st.success("✅ Email sent successfully!")
+    except Exception as e:
+        st.error(f"❌ Failed to send email: {e}")
+
+# 📩 Button to Send Email
+if st.button("Send Results via Email"):
+    send_email(email, pdf_buffer)
