@@ -78,7 +78,7 @@ with col1:
 with col2:
     email = st.text_input("Email")
 
-st.header("### Determining Seller Discretionary Earnings")
+st.header("Determining Seller Discretionary Earnings")
 st.markdown("Financial Information")
 income = st.number_input("Food & Beverage Income ($)", value=None, placeholder="Enter value", help="Total food & beverage revenue.")
 purchases = st.number_input("F&B Purchases ($)", value=None, placeholder="Enter value", help="Cost of food & beverage inventory purchased.")
@@ -116,7 +116,7 @@ if income and sde >= 0:
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-st.header("### Determining the Income Valuation through Owner Add Backs")
+st.header("Determining the Income Valuation through Owner Add Backs")
 st.markdown("Adjustments to Seller Discretionary Earnings")
 owners_comp = st.number_input("Owner's Compensation", value=None, placeholder="Enter value", help="Owner's annual compensation from the business.")
 health_insurance = st.number_input("Health Insurance", value=None, placeholder="Enter value", help="Owner's health insurance premiums.")
