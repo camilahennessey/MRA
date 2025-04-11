@@ -179,12 +179,15 @@ pdf.save()
 pdf_buffer.seek(0)
 
 # --- Buttons ---
-st.download_button(
-    label="Download Results as PDF",
-    data=pdf_buffer,
-    file_name="sde_results.pdf",
-    mime="application/pdf"
-)
+if name and email:
+    st.download_button(
+        label="Download Results as PDF",
+        data=pdf_buffer,
+        file_name="sde_results.pdf",
+        mime="application/pdf"
+    )
+else:
+    st.warning("⚠️ Please fill out both Name and Email to download your results.")
 
 if st.button("Send Results to Your Email"):
     if name and email:
