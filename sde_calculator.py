@@ -57,9 +57,9 @@ def save_to_google_sheets(name, email):
             valueInputOption="RAW",
             body=body
         ).execute()
-        st.success("✅ User info saved to Google Sheets successfully!")
+        st.success("✅")
     except Exception as e:
-        st.error(f"❌ Failed to save to Google Sheets: {e}")
+        st.error(f"❌: {e}")
 
 # --- UI LAYOUT ---
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
