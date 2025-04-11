@@ -53,7 +53,7 @@ def save_to_google_sheets(name, email):
     try:
         sheet.values().append(
             spreadsheetId=GCP_SHEET_ID,
-            range="'MRA Valuation Tool Users'!A:B",
+            range="`MRA Valuation Tool Users`!A:B",  # <-- backticks
             valueInputOption="RAW",
             body=body
         ).execute()
