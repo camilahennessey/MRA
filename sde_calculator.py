@@ -46,14 +46,14 @@ def send_email(to_email, pdf_buffer):
         st.success("✅ Email sent successfully!")
     except Exception as e:
         st.error(f"❌ Email sending failed: {str(e)}")
-        
+
 def save_to_google_sheets(name, email):
     values = [[name, email]]
     body = {"values": values}
     try:
         sheet.values().append(
             spreadsheetId=GCP_SHEET_ID,
-            range="MRA Valuation Tool Users!A:B",   # <-- exactly like this (NO quotes)
+            range="MRA Valuation Tool Users!A:B",
             valueInputOption="RAW",
             body=body
         ).execute()
@@ -67,12 +67,10 @@ st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
 st.title("MRA Seller’s Discretionary Earnings Valuation Calculator")
 
 st.markdown("""
-<div style='background-color:#f0f0f0; padding:15px; border-left:6px solid #333;'>
-Seller Discretionary Earnings (SDE) represents a business’s operating income before deducting the owner's salary and benefits, interest, taxes, depreciation, and amortization. 
-This calculator helps estimate SDE and project valuation ranges based on industry-standard multiples. 
-This tool is intended for informational purposes only.
-</div>
-""", unsafe_allow_html=True)
+*This is merely a broadbrush modeling tool to assist you in an understanding of what your restaurant business worth may be. 
+For definitive financial understanding of the valuation of your business, the assessment should be done by a Financial Professional certified and specializing in business valuations. 
+The financial information you provide in this modeling tool is not captured and is for your eyes only.*
+""")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -80,6 +78,7 @@ with col1:
 with col2:
     email = st.text_input("Email")
 
+st.markdown("### Determining Seller Discretionary Earnings")
 st.header("Financial Information")
 income = st.number_input("Food & Beverage Income ($)", value=None, placeholder="Enter value", help="Total food & beverage revenue.")
 purchases = st.number_input("F&B Purchases ($)", value=None, placeholder="Enter value", help="Cost of food & beverage inventory purchased.")
@@ -117,7 +116,7 @@ if income and sde >= 0:
     ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
     st.pyplot(fig)
 
-# --- Adjustments ---
+st.markdown("### Determining the Income Valuation through Owner Add Backs")
 st.header("Adjustments to Seller Discretionary Earnings")
 owners_comp = st.number_input("Owner's Compensation", value=None, placeholder="Enter value", help="Owner's annual compensation from the business.")
 health_insurance = st.number_input("Health Insurance", value=None, placeholder="Enter value", help="Owner's health insurance premiums.")
@@ -143,14 +142,31 @@ total_adjustments = sum(v or 0 for v in [
 ])
 
 net_profit_loss = sde + total_adjustments
-valuation_1_5x = net_profit_loss * 1.5
-valuation_2_0x = net_profit_loss * 2.0
-valuation_2_5x = net_profit_loss * 2.5
+total_income_valuation = net_profit_loss  # Naming for clarity
+valuation_1_5x = total_income_valuation * 1.5
+valuation_2_0x = total_income_valuation * 2.0
+valuation_2_5x = total_income_valuation * 2.5
+
+st.markdown(f"**Total Owner Benefit:** ${total_adjustments:,.0f}")
+st.markdown(f"**Net Profit/Loss:** ${net_profit_loss:,.0f}")
+st.markdown(f"**Total Income Valuation:** ${total_income_valuation:,.0f}")
 
 st.header("Valuation Multiples")
+st.markdown("""
+**The Low, Median and High Valuation Multiple**  
+Once SDE is calculated, a multiplier is used to arrive at a business valuation, with the multiplier varying based on industry, growth outlook, an example would be if a liquor license is considered an asset of the business, also seasonality and competition.
+""")
+
 st.write(f"#### Low Multiple Valuation (1.5x): **${valuation_1_5x:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${valuation_2_0x:,.0f}**")
 st.write(f"#### High Multiple Valuation (2.5x): **${valuation_2_5x:,.0f}**")
+
+st.markdown("""
+A copy of this report will be emailed to you.  
+We hope this Restaurant Business Modeling tool has been a good exercise for you in understanding how valuations work and a model of a range in which your business may land in.  
+If you have questions as to this methodology or would like advice or assistance in the valuation of your restaurant business, please reach out to Kerry Miller at [kmiller@themassrest.org](mailto:kmiller@themassrest.org).  
+Based on your questions or needs, he will connect you with the correct subject matter expert.
+""")
 
 # --- PDF Export ---
 pdf_buffer = BytesIO()
@@ -168,6 +184,7 @@ for line in [
     f"Earnings Margin: {sde_margin:.2f}%",
     f"Total Owner Benefit: ${total_adjustments:,.2f}",
     f"Net Profit/Loss: ${net_profit_loss:,.2f}",
+    f"Total Income Valuation: ${total_income_valuation:,.2f}",
     f"Low Valuation (1.5x): ${valuation_1_5x:,.2f}",
     f"Median Valuation (2.0x): ${valuation_2_0x:,.2f}",
     f"High Valuation (2.5x): ${valuation_2_5x:,.2f}",
