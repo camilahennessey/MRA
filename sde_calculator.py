@@ -46,12 +46,12 @@ def send_email(to_email, pdf_buffer):
         st.success("✅ Email sent successfully!")
     except Exception as e:
         st.error(f"❌ Email sending failed: {str(e)}")
-
+        
 def save_to_google_sheets(name, email):
     values = [[name, email]]
     body = {"values": values}
     try:
-       sheet.values().append(
+        sheet.values().append(
             spreadsheetId=GCP_SHEET_ID,
             range="'MRA Valuation Tool Users'!A:B",
             valueInputOption="RAW",
@@ -60,6 +60,7 @@ def save_to_google_sheets(name, email):
         st.success("✅ User info saved to Google Sheets successfully!")
     except Exception as e:
         st.error(f"❌ Failed to save to Google Sheets: {e}")
+
 # --- UI LAYOUT ---
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
 
