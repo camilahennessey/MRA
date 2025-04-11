@@ -57,7 +57,7 @@ def save_to_google_sheets(name, email):
             valueInputOption="RAW",
             body=body
         ).execute()
-        st.success("✅")
+        st.success("✅ Thanks for using our tool!")
     except Exception as e:
         st.error(f"❌: {e}")
 
