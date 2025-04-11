@@ -8,6 +8,7 @@ from reportlab.pdfgen import canvas
 import base64
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+import matplotlib.pyplot as plt
 
 # --- PAGE SETUP ---
 st.set_page_config(layout="wide")
@@ -19,6 +20,7 @@ SENDGRID_SENDER = st.secrets["SENDGRID_SENDER"]
 # --- GOOGLE SHEETS SETUP ---
 GCP_SHEET_ID = st.secrets["GCP_SHEET_ID"]
 SCOPE = ["https://www.googleapis.com/auth/spreadsheets"]
+
 creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=SCOPE)
 service = build('sheets', 'v4', credentials=creds)
 sheet = service.spreadsheets()
@@ -46,7 +48,6 @@ def send_email(to_email, pdf_buffer):
     except Exception as e:
         st.error(f"❌ Email sending failed: {str(e)}")
 
-
 def save_to_google_sheets(name, email):
     values = [[name, email]]
     body = {"values": values}
@@ -73,10 +74,37 @@ purchases = st.number_input("F&B Purchases ($)", min_value=0, help="Cost of food
 labor = st.number_input("Salaries, Wages, Taxes & Benefits ($)", min_value=0, help="Total employee salaries, taxes, and benefits.")
 operating_expenses = st.number_input("Operating Expenses ($)", min_value=0, help="Other operating costs like rent, utilities, supplies.")
 
+# --- SDE Calculation ---
 total_expenses = purchases + labor + operating_expenses
 sde = income - total_expenses
 sde_margin = (sde / income) * 100 if income else 0
 
+st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
+st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f}**")
+st.write(f"### Earnings Margin: **{sde_margin:.0f}%**")
+
+# --- DONUT CHART ---
+if income > 0 and sde >= 0:
+    values = [total_expenses, sde]
+    labels = ["Total Expenses", "SDE"]
+    colors = ['#2E86AB', '#F5B041']
+
+    fig, ax = plt.subplots(figsize=(3, 3))
+    wedges, texts, autotexts = ax.pie(
+        values,
+        labels=labels,
+        colors=colors,
+        autopct=lambda p: f"${int(round(p * sum(values) / 100.0)):,}",
+        startangle=90,
+        wedgeprops=dict(width=0.35, edgecolor='white'),
+        textprops=dict(color="black", fontsize=8)
+    )
+
+    ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=12, fontweight='bold')
+    ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
+    st.pyplot(fig)
+
+# --- ADJUSTMENTS ---
 st.header("Adjustments to Seller Discretionary Earnings")
 owners_comp = st.number_input("Owner's Compensation", min_value=0, help="Owner's annual compensation from the business.")
 health_insurance = st.number_input("Health Insurance", min_value=0, help="Owner's health insurance premiums.")
@@ -94,51 +122,46 @@ occupancy_adjustment = st.number_input("Occupancy Cost Adjustments", min_value=0
 other1 = st.number_input("Other", min_value=0, help="Other non-operating adjustments.")
 other2 = st.number_input("Other (Additional)", min_value=0, help="Additional adjustments not listed above.")
 
-# --- CALCULATIONS ---
-total_adjustments = (owners_comp + health_insurance + auto_expense + cell_expense + other_personal + 
-    extraordinary_expense + receipts_owner_purchases + depreciation_amortization + interest_loans + 
+# --- FINAL CALCULATIONS ---
+total_adjustments = (owners_comp + health_insurance + auto_expense + cell_expense + other_personal +
+    extraordinary_expense + receipts_owner_purchases + depreciation_amortization + interest_loans +
     travel_entertainment + donations + family_salaries + occupancy_adjustment + other1 + other2)
 
 net_profit_loss = sde + total_adjustments
-
 valuation_1_5x = net_profit_loss * 1.5
 valuation_2_0x = net_profit_loss * 2.0
 valuation_2_5x = net_profit_loss * 2.5
 
-# --- PDF GENERATION ---
+st.header("Valuation Multiples")
+st.write(f"#### Low Multiple Valuation (1.5x): **${valuation_1_5x:,.0f}**")
+st.write(f"#### Median Multiple Valuation (2.0x): **${valuation_2_0x:,.0f}**")
+st.write(f"#### High Multiple Valuation (2.5x): **${valuation_2_5x:,.0f}**")
+
+# --- PDF Export ---
 pdf_buffer = BytesIO()
 pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
 pdf.setFont("Helvetica-Bold", 16)
 pdf.drawString(100, 750, "MRA SDE Valuation Report")
 y = 720
-
-# Helper to write lines
 pdf.setFont("Helvetica", 12)
-lines = [
+for line in [
     f"Name: {name}",
     f"Email: {email}",
-    f"Income: ${income:,.2f}",
-    f"Purchases: ${purchases:,.2f}",
-    f"Labor: ${labor:,.2f}",
-    f"Operating Expenses: ${operating_expenses:,.2f}",
     f"Total Expenses: ${total_expenses:,.2f}",
     f"SDE: ${sde:,.2f}",
-    f"SDE Margin: {sde_margin:.2f}%",
+    f"Earnings Margin: {sde_margin:.2f}%",
     f"Total Owner Benefit: ${total_adjustments:,.2f}",
     f"Net Profit/Loss: ${net_profit_loss:,.2f}",
     f"Low Valuation (1.5x): ${valuation_1_5x:,.2f}",
     f"Median Valuation (2.0x): ${valuation_2_0x:,.2f}",
-    f"High Valuation (2.5x): ${valuation_2_5x:,.2f}"
-]
-
-for line in lines:
+    f"High Valuation (2.5x): ${valuation_2_5x:,.2f}",
+]:
     pdf.drawString(80, y, line)
     y -= 20
-
 pdf.save()
 pdf_buffer.seek(0)
 
-# --- BUTTONS ---
+# --- Buttons ---
 st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
