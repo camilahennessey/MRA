@@ -9,21 +9,21 @@ import base64
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
-# Page setup
+# --- PAGE SETUP ---
 st.set_page_config(layout="wide")
 
-# 1. EMAIL SETUP
+# --- EMAIL SETUP ---
 SENDGRID_API_KEY = st.secrets["SENDGRID_API_KEY"]
 SENDGRID_SENDER = st.secrets["SENDGRID_SENDER"]
 
-# 2. GOOGLE SHEETS SETUP
+# --- GOOGLE SHEETS SETUP ---
 GCP_SHEET_ID = st.secrets["GCP_SHEET_ID"]
 SCOPE = ["https://www.googleapis.com/auth/spreadsheets"]
 creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=SCOPE)
 service = build('sheets', 'v4', credentials=creds)
 sheet = service.spreadsheets()
 
-# --- Functions ---
+# --- FUNCTIONS ---
 def send_email(to_email, pdf_buffer):
     sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
     message = Mail(
@@ -57,7 +57,7 @@ def save_to_google_sheets(name, email):
         body=body
     ).execute()
 
-# --- UI Layout ---
+# --- UI LAYOUT ---
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
 st.title("MRA Seller Discretionary Earnings Valuation Calculator")
 
@@ -68,78 +68,77 @@ with col2:
     email = st.text_input("Email")
 
 st.header("Financial Information")
-income = st.number_input("Food & Beverage Income ($)", min_value=0)
-purchases = st.number_input("F&B Purchases ($)", min_value=0)
-labor = st.number_input("Salaries, Wages, Taxes & Benefits ($)", min_value=0)
-operating_expenses = st.number_input("Operating Expenses ($)", min_value=0)
+income = st.number_input("Food & Beverage Income ($)", min_value=0, help="Total food & beverage revenue.")
+purchases = st.number_input("F&B Purchases ($)", min_value=0, help="Cost of food & beverage inventory purchased.")
+labor = st.number_input("Salaries, Wages, Taxes & Benefits ($)", min_value=0, help="Total employee salaries, taxes, and benefits.")
+operating_expenses = st.number_input("Operating Expenses ($)", min_value=0, help="Other operating costs like rent, utilities, supplies.")
 
 total_expenses = purchases + labor + operating_expenses
 sde = income - total_expenses
 sde_margin = (sde / income) * 100 if income else 0
 
 st.header("Adjustments to Seller Discretionary Earnings")
-owners_comp = st.number_input("Owner's Compensation", min_value=0)
-health_insurance = st.number_input("Health Insurance", min_value=0)
-auto_expense = st.number_input("Auto Expense", min_value=0)
-cell_expense = st.number_input("Cell Phone Expense", min_value=0)
-other_personal = st.number_input("Other Personal Expense", min_value=0)
-extraordinary_expense = st.number_input("Extraordinary Nonrecurring Expense", min_value=0)
-receipts_owner_purchases = st.number_input("Receipts for Owner Purchases", min_value=0)
-depreciation_amortization = st.number_input("Depreciation and Amortization", min_value=0)
-interest_loans = st.number_input("Interest on Loan Payments", min_value=0)
-travel_entertainment = st.number_input("Travel and Entertainment", min_value=0)
-donations = st.number_input("Donations", min_value=0)
-family_salaries = st.number_input("Family Salaries", min_value=0)
-occupancy_adjustment = st.number_input("Occupancy Cost Adjustments", min_value=0)
-other1 = st.number_input("Other", min_value=0)
-other2 = st.number_input("Other (Additional)", min_value=0)
+owners_comp = st.number_input("Owner's Compensation", min_value=0, help="Owner's annual compensation from the business.")
+health_insurance = st.number_input("Health Insurance", min_value=0, help="Owner's health insurance premiums.")
+auto_expense = st.number_input("Auto Expense", min_value=0, help="Vehicle expenses reimbursed or paid by business.")
+cell_expense = st.number_input("Cell Phone Expense", min_value=0, help="Owner's cell phone expenses paid by business.")
+other_personal = st.number_input("Other Personal Expense", min_value=0, help="Other personal expenses paid by business.")
+extraordinary_expense = st.number_input("Extraordinary Nonrecurring Expense", min_value=0, help="Unusual one-time expenses.")
+receipts_owner_purchases = st.number_input("Receipts for Owner Purchases", min_value=0, help="Business-paid personal purchases.")
+depreciation_amortization = st.number_input("Depreciation and Amortization", min_value=0, help="Non-cash expenses: depreciation and amortization.")
+interest_loans = st.number_input("Interest on Loan Payments", min_value=0, help="Interest paid on loans.")
+travel_entertainment = st.number_input("Travel and Entertainment", min_value=0, help="Travel, meals, entertainment for business purposes.")
+donations = st.number_input("Donations", min_value=0, help="Charitable donations made by business.")
+family_salaries = st.number_input("Family Salaries", min_value=0, help="Salaries paid to family members not critical to business.")
+occupancy_adjustment = st.number_input("Occupancy Cost Adjustments", min_value=0, help="Adjustment if rent is above/below market.")
+other1 = st.number_input("Other", min_value=0, help="Other non-operating adjustments.")
+other2 = st.number_input("Other (Additional)", min_value=0, help="Additional adjustments not listed above.")
 
-# Total Owner Benefits
+# --- CALCULATIONS ---
 total_adjustments = (owners_comp + health_insurance + auto_expense + cell_expense + other_personal + 
     extraordinary_expense + receipts_owner_purchases + depreciation_amortization + interest_loans + 
     travel_entertainment + donations + family_salaries + occupancy_adjustment + other1 + other2)
 
 net_profit_loss = sde + total_adjustments
 
-# Valuation Multiples (Fixed SDE for valuation section)
-_fixed_sde_for_multiples = 86729
-valuation_1_5x = _fixed_sde_for_multiples * 1.5
-valuation_2_0x = _fixed_sde_for_multiples * 2.0
-valuation_2_5x = _fixed_sde_for_multiples * 2.5
+valuation_1_5x = net_profit_loss * 1.5
+valuation_2_0x = net_profit_loss * 2.0
+valuation_2_5x = net_profit_loss * 2.5
 
-# --- PDF Generation ---
+# --- PDF GENERATION ---
 pdf_buffer = BytesIO()
 pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
 pdf.setFont("Helvetica-Bold", 16)
 pdf.drawString(100, 750, "MRA SDE Valuation Report")
 y = 720
 
-def write_line(text):
-    global y
-    pdf.setFont("Helvetica", 12)
-    pdf.drawString(80, y, text)
-    y -= 20
+# Helper to write lines
+pdf.setFont("Helvetica", 12)
+lines = [
+    f"Name: {name}",
+    f"Email: {email}",
+    f"Income: ${income:,.2f}",
+    f"Purchases: ${purchases:,.2f}",
+    f"Labor: ${labor:,.2f}",
+    f"Operating Expenses: ${operating_expenses:,.2f}",
+    f"Total Expenses: ${total_expenses:,.2f}",
+    f"SDE: ${sde:,.2f}",
+    f"SDE Margin: {sde_margin:.2f}%",
+    f"Total Owner Benefit: ${total_adjustments:,.2f}",
+    f"Net Profit/Loss: ${net_profit_loss:,.2f}",
+    f"Low Valuation (1.5x): ${valuation_1_5x:,.2f}",
+    f"Median Valuation (2.0x): ${valuation_2_0x:,.2f}",
+    f"High Valuation (2.5x): ${valuation_2_5x:,.2f}"
+]
 
-write_line(f"Name: {name}")
-write_line(f"Email: {email}")
-write_line(f"Income: ${income:,.2f}")
-write_line(f"Purchases: ${purchases:,.2f}")
-write_line(f"Labor: ${labor:,.2f}")
-write_line(f"Operating Expenses: ${operating_expenses:,.2f}")
-write_line(f"Total Expenses: ${total_expenses:,.2f}")
-write_line(f"SDE: ${sde:,.2f}")
-write_line(f"SDE Margin: {sde_margin:.2f}%")
-write_line(f"Total Owner Benefit: ${total_adjustments:,.2f}")
-write_line(f"Net Profit/Loss: ${net_profit_loss:,.2f}")
-write_line(f"Total Income Valuation: ${sde:,.2f}")
-write_line(f"Valuation 1.5x: ${valuation_1_5x:,.2f}")
-write_line(f"Valuation 2.0x: ${valuation_2_0x:,.2f}")
-write_line(f"Valuation 2.5x: ${valuation_2_5x:,.2f}")
+for line in lines:
+    pdf.drawString(80, y, line)
+    y -= 20
 
 pdf.save()
 pdf_buffer.seek(0)
 
-# --- Download and Send Buttons ---
+# --- BUTTONS ---
 st.download_button(
     label="Download Results as PDF",
     data=pdf_buffer,
