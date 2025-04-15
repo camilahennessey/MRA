@@ -141,8 +141,9 @@ total_adjustments = sum(v or 0 for v in [
     interest_loans, travel_entertainment, donations, family_salaries, occupancy_adjustment, other1, other2
 ])
 
+
 net_profit_loss = sde + total_adjustments
-total_income_valuation = net_profit_loss  # Naming for clarity
+total_income_valuation = sde  # ← TRUE base value for multipliers
 valuation_1_5x = total_income_valuation * 1.5
 valuation_2_0x = total_income_valuation * 2.0
 valuation_2_5x = total_income_valuation * 2.5
