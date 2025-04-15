@@ -100,8 +100,8 @@ if income and sde >= 0:
     values = [total_expenses, sde]
     labels = ["Total Expenses", "SDE"]
     colors = ['#2E86AB', '#F5B041']
-
-    fig, ax = plt.subplots(figsize=(3, 3))
+   
+    fig, ax = plt.subplots(figsize=(2.5, 2.5))  # smaller and cleaner
     wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
