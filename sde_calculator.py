@@ -101,7 +101,7 @@ if income and sde >= 0:
     labels = ["Total Expenses", "SDE"]
     colors = ['#2E86AB', '#F5B041']
    
-    fig, ax = plt.subplots(figsize=(2.5, 2.5))  # smaller and cleaner
+    fig, ax = plt.subplots(figsize=(1,5, 1,5))  # smaller and cleaner
     wedges, texts, autotexts = ax.pie(
         values,
         labels=labels,
@@ -109,11 +109,11 @@ if income and sde >= 0:
         autopct=lambda p: f"${int(round(p * sum(values) / 100.0)):,}",
         startangle=90,
         wedgeprops=dict(width=0.35, edgecolor='white'),
-        textprops=dict(color="black", fontsize=8)
+        textprops=dict(color="black", fontsize=6)
     )
 
-    ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=12, fontweight='bold')
-    ax.set_title("SDE Margin", fontsize=12, fontweight='bold')
+    ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=8, fontweight='bold')
+    ax.set_title("SDE Margin", fontsize=8, fontweight='bold')
     st.pyplot(fig)
 
 st.header("Determining the Income Valuation through Owner Add Backs")
@@ -141,14 +141,21 @@ total_adjustments = sum(v or 0 for v in [
     interest_loans, travel_entertainment, donations, family_salaries, occupancy_adjustment, other1, other2
 ])
 
+# --- Final Calculations ---
+total_owner_benefit = sum(v or 0 for v in [
+    owners_comp, health_insurance, auto_expense, cell_expense, other_personal,
+    extraordinary_expense, receipts_owner_purchases, depreciation_amortization,
+    interest_loans, travel_entertainment, donations, family_salaries, occupancy_adjustment, other1, other2
+])
 
-net_profit_loss = sde + total_adjustments
-total_income_valuation = sde  # ← TRUE base value for multipliers
+net_profit_loss = (income or 0) - total_expenses
+total_income_valuation = net_profit_loss + total_owner_benefit
+
 valuation_1_5x = total_income_valuation * 1.5
 valuation_2_0x = total_income_valuation * 2.0
 valuation_2_5x = total_income_valuation * 2.5
 
-st.markdown(f"**Total Owner Benefit:** ${total_adjustments:,.0f}")
+st.markdown(f"**Total Owner Benefit:** ${total_owner_benefit:,.0f}")
 st.markdown(f"**Net Profit/Loss:** ${net_profit_loss:,.0f}")
 st.markdown(f"**Total Income Valuation:** ${total_income_valuation:,.0f}")
 
