@@ -43,9 +43,9 @@ def send_email(to_email, pdf_buffer):
     message.attachment = attachment
     try:
         sg.send(message)
-        st.success("✅ Email sent successfully!")
+        st.success("Email sent successfully!")
     except Exception as e:
-        st.error(f"❌ Email sending failed: {str(e)}")
+        st.error(f"Email sending failed: {str(e)}")
 
 def save_to_google_sheets(name, email):
     values = [[name, email]]
@@ -57,18 +57,18 @@ def save_to_google_sheets(name, email):
             valueInputOption="RAW",
             body=body
         ).execute()
-        st.success("✅ Thanks for using our tool!")
+        st.success("Thanks for using our tool!")
     except Exception as e:
-        st.error(f"❌: {e}")
+        st.error(f"{e}")
 
 # --- UI LAYOUT ---
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
+
 st.title("MRA Seller’s Discretionary Earnings Valuation Calculator")
 
 st.markdown("""
 *This is merely a broadbrush modeling tool to assist you in an understanding of what your restaurant business worth may be. 
-For definitive financial understanding of the valuation of your business, the assessment should be done by a Financial Professional certified and specializing in business valuations. 
-The financial information you provide in this modeling tool is not captured and is for your eyes only.*
+For definitive financial understanding of the valuation of your business, the assessment should be done by a Financial Professional certified and specializing in business valuations.*  
 """)
 
 col1, col2 = st.columns(2)
@@ -79,20 +79,25 @@ with col2:
 
 st.header("Determining Seller Discretionary Earnings")
 st.markdown("Financial Information")
-income = st.number_input("Food & Beverage Income ($)", value=None, placeholder="Enter value", help="Total food & beverage revenue.", format="%d")
-purchases = st.number_input("F&B Purchases ($)", value=None, placeholder="Enter value", help="Cost of food & beverage inventory purchased.", format="%d")
-labor = st.number_input("Salaries, Wages, Taxes & Benefits ($)", value=None, placeholder="Enter value", help="Total employee salaries, taxes, and benefits.", format="%d")
-operating_expenses = st.number_input("Operating Expenses ($)", value=None, placeholder="Enter value", help="Other operating costs like rent, utilities, supplies.", format="%d")
+
+def input_integer(label, **kwargs):
+    value = st.number_input(label, format="%d", **kwargs)
+    return int(value) if value else 0
+
+income = input_integer("Food & Beverage Income ($)", value=None, placeholder="Enter value")
+purchases = input_integer("F&B Purchases ($)", value=None, placeholder="Enter value")
+labor = input_integer("Salaries, Wages, Taxes & Benefits ($)", value=None, placeholder="Enter value")
+operating_expenses = input_integer("Operating Expenses ($)", value=None, placeholder="Enter value")
 
 # --- SDE Calculation ---
-total_expenses = (purchases or 0) + (labor or 0) + (operating_expenses or 0)
-sde = (income or 0) - total_expenses
-sde_margin = (sde / (income or 1)) * 100
+total_expenses = purchases + labor + operating_expenses
+sde = income - total_expenses
+sde_margin = (sde / income * 100) if income else 0
 
 if income:
-    st.write(f"### Total Expenses: **${total_expenses:,.0f}**")
-    st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,.0f}**")
-    st.write(f"### Earnings Margin: **{sde_margin:.0f}%**")
+    st.write(f"### Total Expenses: **${total_expenses:,}**")
+    st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,}**")
+    st.write(f"### Earnings Margin: **{round(sde_margin)}%**")
 
 # --- Donut Chart ---
 if income and sde >= 0:
@@ -110,98 +115,85 @@ if income and sde >= 0:
         wedgeprops=dict(width=0.35, edgecolor='white'),
         textprops=dict(color="black", fontsize=6)
     )
-
     ax.text(0, 0, f"{round(sde_margin)}%", ha='center', va='center', fontsize=8, fontweight='bold')
     ax.set_title("SDE Margin", fontsize=8, fontweight='bold')
     st.pyplot(fig)
 
-# --- Owner Add Backs ---
 st.header("Determining the Income Valuation through Owner Add Backs")
 st.markdown("Adjustments to Seller Discretionary Earnings")
-owners_comp = st.number_input("Owner's Compensation", value=None, placeholder="Enter value", help="Owner's annual compensation from the business.", format="%d")
-health_insurance = st.number_input("Health Insurance", value=None, placeholder="Enter value", help="Owner's health insurance premiums.", format="%d")
-auto_expense = st.number_input("Auto Expense", value=None, placeholder="Enter value", help="Vehicle expenses reimbursed or paid by business.", format="%d")
-cell_expense = st.number_input("Cell Phone Expense", value=None, placeholder="Enter value", help="Owner's cell phone expenses paid by business.", format="%d")
-other_personal = st.number_input("Other Personal Expense", value=None, placeholder="Enter value", help="Other personal expenses paid by business.", format="%d")
-extraordinary_expense = st.number_input("Extraordinary Nonrecurring Expense", value=None, placeholder="Enter value", help="Unusual one-time expenses.", format="%d")
-receipts_owner_purchases = st.number_input("Receipts for Owner Purchases", value=None, placeholder="Enter value", help="Business-paid personal purchases.", format="%d")
-depreciation_amortization = st.number_input("Depreciation and Amortization", value=None, placeholder="Enter value", help="Non-cash expenses: depreciation and amortization.", format="%d")
-interest_loans = st.number_input("Interest on Loan Payments", value=None, placeholder="Enter value", help="Interest paid on loans.", format="%d")
-travel_entertainment = st.number_input("Travel and Entertainment", value=None, placeholder="Enter value", help="Travel, meals, entertainment for business purposes.", format="%d")
-donations = st.number_input("Donations", value=None, placeholder="Enter value", help="Charitable donations made by business.", format="%d")
-family_salaries = st.number_input("Family Salaries", value=None, placeholder="Enter value", help="Salaries paid to family members not critical to business.", format="%d")
-occupancy_adjustment = st.number_input("Occupancy Cost Adjustments", value=None, placeholder="Enter value", help="Adjustment if rent is above/below market.", format="%d")
-other1 = st.number_input("Other", value=None, placeholder="Enter value", help="Other non-operating adjustments.", format="%d")
-other2 = st.number_input("Other (Additional)", value=None, placeholder="Enter value", help="Additional adjustments not listed above.", format="%d")
 
-# Final calculations
-total_owner_benefit = sum(v or 0 for v in [
+owners_comp = input_integer("Owner's Compensation", value=None, placeholder="Enter value")
+health_insurance = input_integer("Health Insurance", value=None, placeholder="Enter value")
+auto_expense = input_integer("Auto Expense", value=None, placeholder="Enter value")
+cell_expense = input_integer("Cell Phone Expense", value=None, placeholder="Enter value")
+other_personal = input_integer("Other Personal Expense", value=None, placeholder="Enter value")
+extraordinary_expense = input_integer("Extraordinary Nonrecurring Expense", value=None, placeholder="Enter value")
+receipts_owner_purchases = input_integer("Receipts for Owner Purchases", value=None, placeholder="Enter value")
+depreciation_amortization = input_integer("Depreciation and Amortization", value=None, placeholder="Enter value")
+interest_loans = input_integer("Interest on Loan Payments", value=None, placeholder="Enter value")
+travel_entertainment = input_integer("Travel and Entertainment", value=None, placeholder="Enter value")
+donations = input_integer("Donations", value=None, placeholder="Enter value")
+family_salaries = input_integer("Family Salaries", value=None, placeholder="Enter value")
+occupancy_adjustment = input_integer("Occupancy Cost Adjustments", value=None, placeholder="Enter value")
+other1 = input_integer("Other", value=None, placeholder="Enter value")
+other2 = input_integer("Other (Additional)", value=None, placeholder="Enter value")
+
+# --- Final Calculations ---
+adjustments = [
     owners_comp, health_insurance, auto_expense, cell_expense, other_personal,
     extraordinary_expense, receipts_owner_purchases, depreciation_amortization,
-    interest_loans, travel_entertainment, donations, family_salaries, occupancy_adjustment, other1, other2
-])
-net_profit_loss = (income or 0) - total_expenses
+    interest_loans, travel_entertainment, donations, family_salaries,
+    occupancy_adjustment, other1, other2
+]
+total_owner_benefit = sum(adjustments)
+net_profit_loss = income - total_expenses
 total_income_valuation = net_profit_loss + total_owner_benefit
 
 valuation_1_5x = total_income_valuation * 1.5
 valuation_2_0x = total_income_valuation * 2.0
 valuation_2_5x = total_income_valuation * 2.5
 
-st.markdown(f"**Total Owner Benefit:** ${total_owner_benefit:,.0f}")
-st.markdown(f"**Net Profit/Loss:** ${net_profit_loss:,.0f}")
-st.markdown(f"**Total Income Valuation:** ${total_income_valuation:,.0f}")
+st.markdown(f"**Total Owner Benefit:** ${total_owner_benefit:,}")
+st.markdown(f"**Net Profit/Loss:** ${net_profit_loss:,}")
+st.markdown(f"**Total Income Valuation:** ${total_income_valuation:,}")
 
-# Valuation Multiples
 st.header("Valuation Multiples")
-st.markdown("""
-**The Low, Median and High Valuation Multiple**  
-Once SDE is calculated, a multiplier is used to arrive at a business valuation, with the multiplier varying based on industry, growth outlook, an example would be if a liquor license is considered an asset of the business, also seasonality and competition.
-""")
 st.write(f"#### Low Multiple Valuation (1.5x): **${valuation_1_5x:,.0f}**")
 st.write(f"#### Median Multiple Valuation (2.0x): **${valuation_2_0x:,.0f}**")
 st.write(f"#### High Multiple Valuation (2.5x): **${valuation_2_5x:,.0f}**")
 
-# PDF Export
+# --- PDF Export ---
 pdf_buffer = BytesIO()
 pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
 pdf.setFont("Helvetica-Bold", 16)
 pdf.drawString(100, 750, "MRA SDE Valuation Report")
 y = 720
 pdf.setFont("Helvetica", 12)
-
 for line in [
     f"Name: {name}",
     f"Email: {email}",
-    f"Total Expenses: ${total_expenses:,.0f}",
-    f"SDE: ${sde:,.0f}",
+    f"Total Expenses: ${total_expenses:,}",
+    f"SDE: ${sde:,}",
     f"Earnings Margin: {sde_margin:.0f}%",
-    f"Total Owner Benefit: ${total_owner_benefit:,.0f}",
-    f"Net Profit/Loss: ${net_profit_loss:,.0f}",
-    f"Total Income Valuation: ${total_income_valuation:,.0f}",
+    f"Total Owner Benefit: ${total_owner_benefit:,}",
+    f"Net Profit/Loss: ${net_profit_loss:,}",
+    f"Total Income Valuation: ${total_income_valuation:,}",
     f"Low Valuation (1.5x): ${valuation_1_5x:,.0f}",
     f"Median Valuation (2.0x): ${valuation_2_0x:,.0f}",
     f"High Valuation (2.5x): ${valuation_2_5x:,.0f}",
 ]:
     pdf.drawString(80, y, line)
     y -= 20
-
 pdf.save()
 pdf_buffer.seek(0)
 
-# Buttons
+# --- Buttons ---
 if name and email:
-    st.download_button(
-        label="Download Results as PDF",
-        data=pdf_buffer,
-        file_name="sde_results.pdf",
-        mime="application/pdf"
-    )
-else:
-    st.warning("⚠️ Please fill out both Name and Email to download your results.")
+    st.download_button("Download Results as PDF", data=pdf_buffer, file_name="sde_results.pdf", mime="application/pdf")
 
 if st.button("Send Results to Your Email"):
     if name and email:
         send_email(email, pdf_buffer)
         save_to_google_sheets(name, email)
     else:
-        st.error("❌ Please fill out both Name and Email before sending.")
+        st.error("Please fill out both Name and Email before sending.")
