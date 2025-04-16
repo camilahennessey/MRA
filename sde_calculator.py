@@ -61,19 +61,9 @@ def save_to_google_sheets(name, email):
     except Exception as e:
         st.error(f"❌: {e}")
 
-# --- INPUT PARSER WITH COMMAS ---
-def number_input_comma(label, **kwargs):
-    val = st.text_input(label, **kwargs)
-    try:
-        return int(val.replace(',', ''))
-    except:
-        return 0
-
 # --- UI LAYOUT ---
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
-
 st.title("MRA Seller’s Discretionary Earnings Valuation Calculator")
-
 st.markdown("""
 *This is merely a broadbrush modeling tool to assist you in an understanding of what your restaurant business worth may be. 
 For definitive financial understanding of the valuation of your business, the assessment should be done by a Financial Professional certified and specializing in business valuations. 
@@ -88,6 +78,13 @@ with col2:
 
 st.header("Determining Seller Discretionary Earnings")
 st.markdown("Financial Information")
+
+def number_input_comma(label, **kwargs):
+    val = st.text_input(label, **kwargs)
+    try:
+        return int(val.replace(',', ''))
+    except:
+        return 0
 
 income = number_input_comma("Food & Beverage Income ($)", placeholder="Enter value")
 purchases = number_input_comma("F&B Purchases ($)", placeholder="Enter value")
@@ -141,7 +138,7 @@ donations = number_input_comma("Donations", placeholder="Enter value")
 family_salaries = number_input_comma("Family Salaries", placeholder="Enter value")
 occupancy_adjustment = number_input_comma("Occupancy Cost Adjustments", placeholder="Enter value")
 
-# --- Custom Add-back fields ---
+# --- Custom Add-Backs with User-Defined Labels ---
 custom_label_1 = st.text_input("Custom Add-back 1 Label", value="Other")
 custom_value_1 = number_input_comma(custom_label_1, placeholder="Enter value")
 
@@ -194,24 +191,22 @@ pdf.drawString(100, 750, "MRA SDE Valuation Report")
 y = 720
 pdf.setFont("Helvetica", 12)
 
-pdf_lines = [
+for line in [
     f"Name: {name}",
     f"Email: {email}",
     f"Total Expenses: ${total_expenses:,}",
     f"SDE: ${sde:,}",
     f"Earnings Margin: {sde_margin:.0f}%",
-    f"{custom_label_1}: ${custom_value_1:,}",
-    f"{custom_label_2}: ${custom_value_2:,}",
-    f"{custom_label_3}: ${custom_value_3:,}",
     f"Total Owner Benefit: ${total_owner_benefit:,}",
     f"Net Profit/Loss: ${net_profit_loss:,}",
     f"Total Income Valuation: ${total_income_valuation:,}",
     f"Low Valuation (1.5x): ${valuation_1_5x:,.0f}",
     f"Median Valuation (2.0x): ${valuation_2_0x:,.0f}",
     f"High Valuation (2.5x): ${valuation_2_5x:,.0f}",
-]
-
-for line in pdf_lines:
+    f"{custom_label_1}: ${custom_value_1:,}",
+    f"{custom_label_2}: ${custom_value_2:,}",
+    f"{custom_label_3}: ${custom_value_3:,}",
+]:
     pdf.drawString(80, y, line)
     y -= 20
 
