@@ -78,6 +78,10 @@ with col1:
 with col2:
     email = st.text_input("Email")
 
+# --- New Custom Field Inputs for PDF Report ---
+pdf_title = st.text_input("Custom Report Title (Optional)", value="MRA SDE Valuation Report")
+pdf_subtitle = st.text_input("Custom Report Subtitle (Optional)", value="")
+
 st.header("Determining Seller Discretionary Earnings")
 st.markdown("Financial Information")
 
@@ -181,8 +185,13 @@ Based on your questions or needs, he will connect you with the correct subject m
 pdf_buffer = BytesIO()
 pdf = canvas.Canvas(pdf_buffer, pagesize=letter)
 pdf.setFont("Helvetica-Bold", 16)
-pdf.drawString(100, 750, "MRA SDE Valuation Report")
-y = 720
+pdf.drawString(100, 750, pdf_title)
+if pdf_subtitle:
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(100, 730, pdf_subtitle)
+    y = 710
+else:
+    y = 720
 pdf.setFont("Helvetica", 12)
 
 for line in [
