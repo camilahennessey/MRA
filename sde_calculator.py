@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import sendgrid
 from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
@@ -60,6 +61,7 @@ def save_to_google_sheets(name, email):
     except Exception as e:
         st.error(f"❌: {e}")
 
+# --- INPUT PARSER WITH COMMAS ---
 def number_input_comma(label, **kwargs):
     val = st.text_input(label, **kwargs)
     try:
@@ -69,6 +71,7 @@ def number_input_comma(label, **kwargs):
 
 # --- UI LAYOUT ---
 st.image("images/MRA logo 9.2015-colorLG.jpg", width=400)
+
 st.title("MRA Seller’s Discretionary Earnings Valuation Calculator")
 
 st.markdown("""
@@ -91,6 +94,7 @@ purchases = number_input_comma("F&B Purchases ($)", placeholder="Enter value")
 labor = number_input_comma("Salaries, Wages, Taxes & Benefits ($)", placeholder="Enter value")
 operating_expenses = number_input_comma("Operating Expenses ($)", placeholder="Enter value")
 
+# --- SDE Calculation ---
 total_expenses = purchases + labor + operating_expenses
 sde = income - total_expenses
 sde_margin = (sde / income) * 100 if income else 0
@@ -100,10 +104,12 @@ if income:
     st.write(f"### Seller’s Discretionary Earnings (SDE): **${sde:,}**")
     st.write(f"### Earnings Margin: **{sde_margin:.0f}%**")
 
+# --- Donut Chart ---
 if income and sde >= 0:
     values = [total_expenses, sde]
     labels = ["Total Expenses", "SDE"]
     colors = ['#2E86AB', '#F5B041']
+
     fig, ax = plt.subplots(figsize=(1, 1))
     ax.pie(
         values,
@@ -121,44 +127,38 @@ if income and sde >= 0:
 st.header("Determining the Income Valuation through Owner Add Backs")
 st.markdown("Adjustments to Seller Discretionary Earnings")
 
-# Static fields
-adjustments_dict = {
-    "Owner's Compensation": number_input_comma("Owner's Compensation", placeholder="Enter value"),
-    "Health Insurance": number_input_comma("Health Insurance", placeholder="Enter value"),
-    "Auto Expense": number_input_comma("Auto Expense", placeholder="Enter value"),
-    "Cell Phone Expense": number_input_comma("Cell Phone Expense", placeholder="Enter value"),
-    "Other Personal Expense": number_input_comma("Other Personal Expense", placeholder="Enter value"),
-    "Extraordinary Nonrecurring Expense": number_input_comma("Extraordinary Nonrecurring Expense", placeholder="Enter value"),
-    "Receipts for Owner Purchases": number_input_comma("Receipts for Owner Purchases", placeholder="Enter value"),
-    "Depreciation and Amortization": number_input_comma("Depreciation and Amortization", placeholder="Enter value"),
-    "Interest on Loan Payments": number_input_comma("Interest on Loan Payments", placeholder="Enter value"),
-    "Travel and Entertainment": number_input_comma("Travel and Entertainment", placeholder="Enter value"),
-    "Donations": number_input_comma("Donations", placeholder="Enter value"),
-    "Family Salaries": number_input_comma("Family Salaries", placeholder="Enter value"),
-    "Occupancy Cost Adjustments": number_input_comma("Occupancy Cost Adjustments", placeholder="Enter value"),
-    "Other": number_input_comma("Other", placeholder="Enter value"),
-    "Other (Additional)": number_input_comma("Other (Additional)", placeholder="Enter value")
-}
+owners_comp = number_input_comma("Owner's Compensation", placeholder="Enter value")
+health_insurance = number_input_comma("Health Insurance", placeholder="Enter value")
+auto_expense = number_input_comma("Auto Expense", placeholder="Enter value")
+cell_expense = number_input_comma("Cell Phone Expense", placeholder="Enter value")
+other_personal = number_input_comma("Other Personal Expense", placeholder="Enter value")
+extraordinary_expense = number_input_comma("Extraordinary Nonrecurring Expense", placeholder="Enter value")
+receipts_owner_purchases = number_input_comma("Receipts for Owner Purchases", placeholder="Enter value")
+depreciation_amortization = number_input_comma("Depreciation and Amortization", placeholder="Enter value")
+interest_loans = number_input_comma("Interest on Loan Payments", placeholder="Enter value")
+travel_entertainment = number_input_comma("Travel and Entertainment", placeholder="Enter value")
+donations = number_input_comma("Donations", placeholder="Enter value")
+family_salaries = number_input_comma("Family Salaries", placeholder="Enter value")
+occupancy_adjustment = number_input_comma("Occupancy Cost Adjustments", placeholder="Enter value")
 
-# Dynamic custom fields
-if "custom_fields" not in st.session_state:
-    st.session_state.custom_fields = []
+# --- Custom Add-back fields ---
+custom_label_1 = st.text_input("Custom Add-back 1 Label", value="Other")
+custom_value_1 = number_input_comma(custom_label_1, placeholder="Enter value")
 
-if st.button("➕ Add Custom Adjustment Field"):
-    st.session_state.custom_fields.append({"label": "", "value": 0})
+custom_label_2 = st.text_input("Custom Add-back 2 Label", value="Other (Additional)")
+custom_value_2 = number_input_comma(custom_label_2, placeholder="Enter value")
 
-for i, custom in enumerate(st.session_state.custom_fields):
-    cols = st.columns([3, 1])
-    with cols[0]:
-        label = st.text_input(f"Custom Label {i+1}", custom["label"], key=f"label_{i}")
-    with cols[1]:
-        value = number_input_comma("Amount", key=f"value_{i}")
-    st.session_state.custom_fields[i] = {"label": label, "value": value}
-    if label:
-        adjustments_dict[label] = value
+custom_label_3 = st.text_input("Custom Add-back 3 Label", value="Other (Extra)")
+custom_value_3 = number_input_comma(custom_label_3, placeholder="Enter value")
 
-# Calculations
-total_owner_benefit = sum(adjustments_dict.values())
+# --- Final Calculations ---
+total_owner_benefit = sum([
+    owners_comp, health_insurance, auto_expense, cell_expense, other_personal,
+    extraordinary_expense, receipts_owner_purchases, depreciation_amortization,
+    interest_loans, travel_entertainment, donations, family_salaries,
+    occupancy_adjustment, custom_value_1, custom_value_2, custom_value_3
+])
+
 net_profit_loss = income - total_expenses
 total_income_valuation = net_profit_loss + total_owner_benefit
 valuation_1_5x = total_income_valuation * 1.5
@@ -194,27 +194,31 @@ pdf.drawString(100, 750, "MRA SDE Valuation Report")
 y = 720
 pdf.setFont("Helvetica", 12)
 
-lines = [
+pdf_lines = [
     f"Name: {name}",
     f"Email: {email}",
     f"Total Expenses: ${total_expenses:,}",
     f"SDE: ${sde:,}",
     f"Earnings Margin: {sde_margin:.0f}%",
+    f"{custom_label_1}: ${custom_value_1:,}",
+    f"{custom_label_2}: ${custom_value_2:,}",
+    f"{custom_label_3}: ${custom_value_3:,}",
     f"Total Owner Benefit: ${total_owner_benefit:,}",
     f"Net Profit/Loss: ${net_profit_loss:,}",
     f"Total Income Valuation: ${total_income_valuation:,}",
     f"Low Valuation (1.5x): ${valuation_1_5x:,.0f}",
     f"Median Valuation (2.0x): ${valuation_2_0x:,.0f}",
-    f"High Valuation (2.5x): ${valuation_2_5x:,.0f}"
+    f"High Valuation (2.5x): ${valuation_2_5x:,.0f}",
 ]
 
-for line in lines:
+for line in pdf_lines:
     pdf.drawString(80, y, line)
     y -= 20
 
 pdf.save()
 pdf_buffer.seek(0)
 
+# --- Buttons ---
 if name and email:
     st.download_button(
         label="Download Results as PDF",
@@ -231,4 +235,3 @@ if st.button("Send Results to Your Email"):
         save_to_google_sheets(name, email)
     else:
         st.error("❌ Please fill out both Name and Email before sending.")
-
